@@ -21,6 +21,27 @@
   .fill-1 {
     font-variation-settings: 'FILL' 1;
   }
+
+  .print-only {
+    display: none;
+  }
+
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+
+    .print-only {
+      display: block !important;
+    }
+
+    /* Ensure the body takes full height and removes background in print */
+    body {
+      background: white !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
 }
 
 @layer components {
