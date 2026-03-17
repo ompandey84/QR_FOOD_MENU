@@ -1,24 +1,43 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import MenuPage from './pages/MenuPage';
+import LoginPage from './pages/LoginPage';
+import DishForm from './pages/DishForm';
+import AnalyticsPage from './pages/AnalyticsPage';
+import SettingsPage from './pages/SettingsPage';
+import OrdersPage from './pages/OrdersPage';
+import MenuManagerPage from './pages/MenuManagerPage';
+import ProtectedRoute from './components/ProtectedRoute';
+import QRCodesPage from './pages/QRCodesPage';
+import ReservationsPage from './pages/ReservationsPage';
+import TablesPage from './pages/TablesPage';
+import OffersPage from './pages/OffersPage';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        {/* Public – Customer Facing Menu */}
+        <Route path="/menu/:restaurantId" element={<MenuPage />} />
+
+        {/* Admin */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/dashboard" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
+        <Route path="/add-dish" element={<ProtectedRoute><DishForm /></ProtectedRoute>} />
+        <Route path="/edit-dish/:id" element={<ProtectedRoute><DishForm /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+        <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
+        <Route path="/menu-manager" element={<ProtectedRoute><MenuManagerPage /></ProtectedRoute>} />
+        <Route path="/offers" element={<ProtectedRoute><OffersPage /></ProtectedRoute>} />
+        <Route path="/qr-codes" element={<ProtectedRoute><QRCodesPage /></ProtectedRoute>} />
+        <Route path="/reservations" element={<ProtectedRoute><ReservationsPage /></ProtectedRoute>} />
+        <Route path="/tables" element={<ProtectedRoute><TablesPage /></ProtectedRoute>} />
+
+        {/* Default redirect */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
   );
 }
 
