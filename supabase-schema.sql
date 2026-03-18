@@ -57,6 +57,13 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS applied_promo TEXT DEFAULT '';
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount NUMERIC(10, 2) DEFAULT 0;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'unpaid';
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_id TEXT DEFAULT '';
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'counter';
+-- Values: 'online' | 'counter'
+
+-- Indexes for running-bill session lookup (table + restaurant + status + time)
+CREATE INDEX IF NOT EXISTS idx_orders_session
+  ON orders(restaurant_id, table_number, status, created_at DESC);
+
 
 -- 4. Order Items Table
 CREATE TABLE IF NOT EXISTS order_items (

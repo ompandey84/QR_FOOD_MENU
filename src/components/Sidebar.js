@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { HiOutlineChartBar, HiOutlineCollection, HiOutlineCog } from 'react-icons/hi';
 import { FiShoppingBag, FiMaximize } from 'react-icons/fi';
-import { MdOutlineTableRestaurant, MdOutlineRedeem, MdOutlineKitchen } from 'react-icons/md';
+import { MdOutlineTableRestaurant, MdOutlineRedeem, MdOutlineKitchen, MdOutlineReceipt } from 'react-icons/md';
 import { BsCalendarCheck } from 'react-icons/bs';
 
 function Sidebar() {
@@ -79,6 +79,7 @@ function Sidebar() {
         { name: 'Offers', icon: MdOutlineRedeem, path: '/offers' },
         { name: 'Orders', icon: FiShoppingBag, path: '/orders', badge: pendingCount },
         { name: 'Kitchen', icon: MdOutlineKitchen, path: '/kitchen', badge: kitchenCount },
+        { name: 'Running Bill', icon: MdOutlineReceipt, path: '/running-bill' },
         { name: 'Reservations', icon: BsCalendarCheck, path: '/reservations' },
         { name: 'QR Codes', icon: FiMaximize, path: '/qr-codes' },
         { name: 'Tables', icon: MdOutlineTableRestaurant, path: '/tables' },

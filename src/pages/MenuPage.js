@@ -141,6 +141,7 @@ export default function MenuPage() {
                 discount_amount: customerDetails.discount_amount || 0,
                 status: 'pending',
                 payment_status: 'unpaid',
+                payment_method: 'counter', // default; updated to 'online' after Razorpay success
                 payment_id: ''
             };
 

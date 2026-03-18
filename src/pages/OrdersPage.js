@@ -5,12 +5,10 @@ import TopNav from '../components/TopNav';
 import PrintableReceipt from '../components/PrintableReceipt';
 import { useOrderNotifications } from '../hooks/useOrderNotifications';
 
-// Full 4-stage Kanban configuration
+// 2-column Kanban: Incoming (all active) and Completed
 const ORDER_STATUSES = [
-    { id: 'pending',   label: 'Incoming',  color: 'bg-yellow-400' },
-    { id: 'preparing', label: 'Preparing', color: 'bg-blue-500'   },
-    { id: 'ready',     label: 'Ready 🎉',  color: 'bg-green-500'  },
-    { id: 'completed', label: 'Completed', color: 'bg-slate-400'  },
+    { id: 'incoming',  label: 'Incoming Orders', color: 'bg-yellow-400' },
+    { id: 'completed', label: 'Completed',        color: 'bg-green-500'  },
 ];
 
 export default function OrdersPage() {
@@ -25,21 +23,16 @@ export default function OrdersPage() {
     const soundEnabled = true;
     const { playBeep, fireNotification } = useOrderNotifications(soundEnabled);
 
-    // Effect for triggering print dialog after state updates
+    // Trigger print dialog when printingOrder is set
     useEffect(() => {
         if (printingOrder) {
-            // Tiny delay to allow React to render the component into the DOM
-            setTimeout(() => {
-                window.print();
-            }, 100);
+            setTimeout(() => { window.print(); }, 100);
         }
     }, [printingOrder]);
 
-    // Effect to clean up printing order after printing is done
+    // Clean up after print
     useEffect(() => {
-        const handleAfterPrint = () => {
-            setPrintingOrder(null);
-        };
+        const handleAfterPrint = () => setPrintingOrder(null);
         window.addEventListener('afterprint', handleAfterPrint);
         return () => window.removeEventListener('afterprint', handleAfterPrint);
     }, []);
@@ -51,7 +44,6 @@ export default function OrdersPage() {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (!user) return;
 
-                // First get restaurant ID and details
                 const { data: rest } = await supabase
                     .from('restaurants')
                     .select('*')
@@ -62,139 +54,105 @@ export default function OrdersPage() {
                 setRestaurant(rest);
                 setRestaurantId(rest.id);
 
-                // Then get all orders for this restaurant (including items)
                 const { data: ordersData, error } = await supabase
                     .from('orders')
-                    .select(`
-                        *,
-                        order_items (*)
-                    `)
+                    .select('*, order_items (*)')
                     .eq('restaurant_id', rest.id)
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
 
-                // Filter out ghost duplicate orders (0 total or 0 items)
-                const validOrders = (ordersData || []).filter(o => o.total > 0 && o.order_items && o.order_items.length > 0);
-
+                // Filter ghost orders (0 total / no items)
+                const validOrders = (ordersData || []).filter(o => o.total > 0 && o.order_items?.length > 0);
                 setOrders(validOrders);
+                seenIdsRef.current = new Set(validOrders.map(o => o.id));
             } catch (err) {
-                console.error("Error fetching orders:", err);
+                console.error('Error fetching orders:', err);
             } finally {
                 setLoading(false);
             }
         }
-
         fetchOrders();
     }, []);
 
-    // 2. Setup real-time subscription for new/updated orders
+    // 2. Real-time subscription
+    const playBeepRef = useRef(playBeep);
+    const fireNotificationRef = useRef(fireNotification);
+    useEffect(() => { playBeepRef.current = playBeep; }, [playBeep]);
+    useEffect(() => { fireNotificationRef.current = fireNotification; }, [fireNotification]);
+
     useEffect(() => {
         if (!restaurantId) return;
 
-        console.log(`Setting up real-time subscription for restaurant: ${restaurantId}`);
         const subscription = supabase
-            .channel('public:orders')
-            .on(
-                'postgres_changes',
-                {
-                    event: '*', // Listen to INSERT, UPDATE, DELETE
-                    schema: 'public',
-                    table: 'orders',
-                    filter: `restaurant_id=eq.${restaurantId}`
-                },
+            .channel('orders-page-realtime')
+            .on('postgres_changes',
+                { event: '*', schema: 'public', table: 'orders', filter: `restaurant_id=eq.${restaurantId}` },
                 async (payload) => {
                     if (payload.eventType === 'INSERT') {
-                        const { data: newOrderWithItems } = await supabase
+                        const { data: newOrder } = await supabase
                             .from('orders')
                             .select('*, order_items(*)')
                             .eq('id', payload.new.id)
                             .single();
 
-                        if (newOrderWithItems && Number(newOrderWithItems.total) > 0 && newOrderWithItems.order_items?.length > 0) {
-                            const isNew = !seenIdsRef.current.has(newOrderWithItems.id);
-                            seenIdsRef.current.add(newOrderWithItems.id);
-                            // Prevent duplicate: only add if not already in state
+                        if (newOrder && Number(newOrder.total) > 0 && newOrder.order_items?.length > 0) {
+                            const isNew = !seenIdsRef.current.has(newOrder.id);
+                            seenIdsRef.current.add(newOrder.id);
                             setOrders(prev => {
-                                const alreadyExists = prev.some(o => o.id === newOrderWithItems.id);
-                                if (alreadyExists) return prev;
-                                return [newOrderWithItems, ...prev];
+                                if (prev.some(o => o.id === newOrder.id)) return prev;
+                                return [newOrder, ...prev];
                             });
                             if (isNew) {
-                                playBeep();
-                                fireNotification(newOrderWithItems);
-                                setNewOrderIds(prev => new Set([...prev, newOrderWithItems.id]));
+                                playBeepRef.current();
+                                fireNotificationRef.current(newOrder);
+                                setNewOrderIds(prev => new Set([...prev, newOrder.id]));
                                 setTimeout(() => {
                                     setNewOrderIds(prev => {
                                         const next = new Set(prev);
-                                        next.delete(newOrderWithItems.id);
+                                        next.delete(newOrder.id);
                                         return next;
                                     });
                                 }, 8000);
                             }
                         }
                     } else if (payload.eventType === 'UPDATE') {
-                        // Fetch full updated order with items so we don't lose order_items
                         const { data: updated } = await supabase
                             .from('orders')
                             .select('*, order_items(*)')
                             .eq('id', payload.new.id)
                             .single();
                         if (updated) {
-                            setOrders(prev => prev.map(order => order.id === updated.id ? updated : order));
+                            setOrders(prev => prev.map(o => o.id === updated.id ? updated : o));
                         }
                     } else if (payload.eventType === 'DELETE') {
-                        setOrders(prev => prev.filter(order => order.id !== payload.old.id));
+                        setOrders(prev => prev.filter(o => o.id !== payload.old.id));
                     }
                 }
             )
             .subscribe();
 
-        return () => {
-            supabase.removeChannel(subscription);
-        };
+        return () => supabase.removeChannel(subscription);
     }, [restaurantId]);
 
-    // Handle moving order to next stage
+    // Update order status in DB and state
     const updateOrderStatus = async (orderId, newStatus) => {
         try {
-            // Optimistic update
-            setOrders(prev => prev.map(order =>
-                order.id === orderId ? { ...order, status: newStatus } : order
-            ));
-
-            // DB update
-            const { error } = await supabase
-                .from('orders')
-                .update({ status: newStatus })
-                .eq('id', orderId);
-
+            setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+            const { error } = await supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
             if (error) throw error;
         } catch (err) {
-            console.error("Failed to update status:", err);
-            alert("Failed to update order status");
-            // Revert on error (would require refetching or keeping previous state)
+            console.error('Status update failed:', err);
         }
     };
 
-    // Fix getNextStatus to use the full 4-step lifecycle
-    const getNextStatus = (currentStatus) => {
-        const flow = ['pending', 'preparing', 'ready', 'completed'];
-        const idx = flow.indexOf(currentStatus);
-        if (idx === -1 || idx === flow.length - 1) return null;
-        return flow[idx + 1];
-    };
+    // Mark any active order as completed
+    const markCompleted = (orderId) => updateOrderStatus(orderId, 'completed');
 
-    const getNextLabel = (status) => {
-        const labels = { pending: '🍳 Send to Kitchen', preparing: '✅ Mark Ready', ready: '🎉 Complete Order' };
-        return labels[status] || null;
-    };
-
-    // Helper to format time "10:30 AM"
+    // Format time helper
     const formatTime = (isoString) => {
         if (!isoString) return '';
-        const d = new Date(isoString);
-        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
     return (
@@ -207,15 +165,15 @@ export default function OrdersPage() {
                 <div className="flex flex-1 flex-col xl:flex-row overflow-hidden">
                     <main className="flex-1 p-6 h-full xl:overflow-hidden overflow-y-auto flex flex-col no-print">
 
-                        {/* Header Details */}
+                        {/* Header */}
                         <div className="flex justify-between items-end mb-6 shrink-0">
                             <div>
                                 <h1 className="text-2xl font-black tracking-tight mb-1">Live Orders</h1>
-                                <p className="text-slate-500 text-sm">Real-time order tracking system</p>
+                                <p className="text-slate-500 text-sm">Real-time order tracking · Kitchen drives status flow</p>
                             </div>
                             <div className="flex gap-3">
                                 <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
-                                    <span className="text-slate-500 text-xs uppercase font-bold tracking-wider block">Today's Revenue</span>
+                                    <span className="text-slate-500 text-xs uppercase font-bold tracking-wider block">Revenue</span>
                                     <span className="text-lg font-black text-slate-800">
                                         ₹{orders.filter(o => o.status === 'completed').reduce((sum, o) => sum + Number(o.total), 0).toFixed(0)}
                                     </span>
@@ -228,17 +186,16 @@ export default function OrdersPage() {
                                 <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
                             </div>
                         ) : (
-                            /* KANBAN BOARD */
+                            /* 2-COLUMN KANBAN */
                             <div className="flex-1 flex gap-6 overflow-x-auto pb-4 snap-x">
                                 {ORDER_STATUSES.map(column => {
-                                    // For the 'pending' column, we'll actually show anything that isn't 'completed'
-                                    // just in case there are legacy orders with 'preparing' or 'ready' status
-                                    const columnOrders = column.id === 'pending'
+                                    const isIncoming = column.id === 'incoming';
+                                    const columnOrders = isIncoming
                                         ? orders.filter(o => o.status !== 'completed')
                                         : orders.filter(o => o.status === 'completed');
 
                                     return (
-                                        <div key={column.id} className="flex-none w-[350px] flex flex-col bg-slate-100/50 rounded-2xl p-4 border border-slate-200/60 snap-center">
+                                        <div key={column.id} className="flex-none w-[360px] flex flex-col bg-slate-100/50 rounded-2xl p-4 border border-slate-200/60 snap-center">
                                             {/* Column Header */}
                                             <div className="flex justify-between items-center mb-4 px-1">
                                                 <div className="flex items-center gap-2">
@@ -250,68 +207,87 @@ export default function OrdersPage() {
                                                 </span>
                                             </div>
 
-                                            {/* Cards Container */}
-                                            <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar">
-                                                {columnOrders.map(order => (
-                                                    <div
-                                                        key={order.id}
-                                                        className={`bg-white p-4 rounded-xl shadow-sm border border-slate-200 transition-all ${newOrderIds.has(order.id) ? 'animate-flash-new border-yellow-400' : ''}`}
-                                                    >
-                                                        {/* Card Header */}
-                                                        <div className="flex justify-between items-start mb-3 border-b border-slate-100 pb-3">
-                                                            <div>
-                                                                <div className="flex items-center gap-2 mb-1">
-                                                                    <span className="text-xs font-bold text-slate-400">
-                                                                        #{order.id.slice(0, 5).toUpperCase()}
-                                                                    </span>
-                                                                    <span className="text-xs text-slate-400">•</span>
-                                                                    <span className="text-xs font-medium text-slate-500">
-                                                                        {formatTime(order.created_at)}
-                                                                    </span>
+                                            {/* Cards */}
+                                            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+                                                {columnOrders.map(order => {
+                                                    const payMethod = order.payment_method || 'counter';
+                                                    const payStatus = order.payment_status || 'unpaid';
+                                                    const isUnpaidCounter = payMethod === 'counter' && payStatus !== 'paid';
+
+                                                    return (
+                                                        <div
+                                                            key={order.id}
+                                                            className={`bg-white p-4 rounded-xl shadow-sm border-l-4 border border-slate-200 transition-all
+                                                                ${newOrderIds.has(order.id) ? 'animate-flash-new' : ''}
+                                                                ${isUnpaidCounter ? 'border-l-yellow-400' : isIncoming ? 'border-l-blue-400' : 'border-l-green-400'}`}
+                                                        >
+                                                            {/* Card Header */}
+                                                            <div className="flex justify-between items-start mb-3 border-b border-slate-100 pb-3">
+                                                                <div>
+                                                                    <div className="flex items-center gap-2 mb-1">
+                                                                        <span className="text-xs font-bold text-slate-400">#{order.id.slice(0, 5).toUpperCase()}</span>
+                                                                        <span className="text-xs text-slate-400">•</span>
+                                                                        <span className="text-xs font-medium text-slate-500">{formatTime(order.created_at)}</span>
+                                                                    </div>
+                                                                    <h3 className="font-bold text-slate-800">{order.customer_name}</h3>
+                                                                    {order.table_number && (
+                                                                        <p className="text-xs font-medium text-primary mt-0.5">Table {order.table_number}</p>
+                                                                    )}
                                                                 </div>
-                                                                <h3 className="font-bold text-slate-800">{order.customer_name}</h3>
-                                                                {order.table_number && (
-                                                                    <p className="text-xs font-medium text-primary mt-0.5">
-                                                                        Table {order.table_number}
-                                                                    </p>
+                                                                <div className="text-right">
+                                                                    <span className="block font-bold text-slate-900">₹{order.total}</span>
+                                                                    <span className="text-xs text-slate-500">{order.order_items?.length || 0} items</span>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Payment Badges */}
+                                                            <div className="flex gap-2 mb-3">
+                                                                <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border
+                                                                    ${payMethod === 'online'
+                                                                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                                                        : 'bg-orange-50 text-orange-700 border-orange-200'}`}>
+                                                                    {payMethod === 'online' ? '💳 Online' : '🧾 Counter'}
+                                                                </span>
+                                                                <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border
+                                                                    ${payStatus === 'paid'
+                                                                        ? 'bg-green-50 text-green-700 border-green-200'
+                                                                        : 'bg-yellow-50 text-yellow-700 border-yellow-300'}`}>
+                                                                    {payStatus === 'paid' ? '✅ Paid' : '🕐 Pending'}
+                                                                </span>
+                                                            </div>
+
+                                                            {/* Items */}
+                                                            <div className="space-y-1.5 mb-4">
+                                                                {order.order_items?.map((item, i) => (
+                                                                    <div key={i} className="flex gap-2 text-sm border-b border-slate-50 pb-2 last:border-0 last:pb-0">
+                                                                        <span className="font-bold text-slate-400 min-w-[20px]">{item.quantity}x</span>
+                                                                        <span className="text-slate-700">{item.name}</span>
+                                                                        <span className="ml-auto text-slate-500 font-medium">₹{(item.price * item.quantity).toFixed(0)}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+
+                                                            {/* Actions */}
+                                                            <div className="flex gap-2">
+                                                                {isIncoming && (
+                                                                    <button
+                                                                        onClick={() => markCompleted(order.id)}
+                                                                        className="flex-1 py-2.5 bg-green-500 hover:bg-green-600 text-white font-bold text-sm rounded-xl transition-colors"
+                                                                    >
+                                                                        ✅ Mark Completed
+                                                                    </button>
                                                                 )}
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <span className="block font-bold text-slate-900">₹{order.total}</span>
-                                                                <span className="text-xs text-slate-500">{order.order_items?.length || 0} items</span>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Items List */}
-                                                        <div className="space-y-1.5 mb-4">
-                                                            {order.order_items?.map((item, i) => (
-                                                                <div key={i} className="flex gap-2 text-sm border-b border-slate-50 pb-2 last:border-0 last:pb-0">
-                                                                    <span className="font-bold text-slate-400 min-w-[20px]">{item.quantity}x</span>
-                                                                    <span className="text-slate-700">{item.name}</span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-
-                                                        {/* Actions */}
-                                                        <div className="flex gap-2">
-                                                            {getNextStatus(order.status) && (
                                                                 <button
-                                                                    onClick={() => updateOrderStatus(order.id, getNextStatus(order.status))}
-                                                                    className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-bold text-sm rounded-xl transition-colors shadow-sm shadow-green-500/20"
+                                                                    onClick={() => setPrintingOrder(order)}
+                                                                    className={`flex-none px-4 py-2.5 font-bold text-sm rounded-xl transition-colors border ${printingOrder?.id === order.id ? 'bg-primary text-charcoal border-primary shadow-sm' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'} no-print`}
+                                                                    title="View Receipt"
                                                                 >
-                                                                    {getNextLabel(order.status)}
+                                                                    🖨️
                                                                 </button>
-                                                            )}
-                                                            <button
-                                                                onClick={() => setPrintingOrder(order)}
-                                                                className={`flex-none px-4 py-3 font-bold text-sm rounded-xl transition-colors border ${printingOrder?.id === order.id ? 'bg-primary text-charcoal border-primary shadow-sm' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'} no-print`}
-                                                                title="View Receipt"
-                                                            >
-                                                                🖨️
-                                                            </button>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
 
                                                 {columnOrders.length === 0 && (
                                                     <div className="text-center py-8">
@@ -350,7 +326,7 @@ export default function OrdersPage() {
                             <div className="h-full flex flex-col items-center justify-center text-center text-slate-400 no-print">
                                 <span className="text-6xl mb-6 opacity-40">🧾</span>
                                 <h3 className="text-lg font-bold text-slate-600 mb-2">No Receipt Selected</h3>
-                                <p className="text-sm px-6">Click the 🖨️ icon on any active order to preview and print its thermal receipt.</p>
+                                <p className="text-sm px-6">Click the 🖨️ icon on any order to preview and print its receipt.</p>
                             </div>
                         )}
                     </aside>

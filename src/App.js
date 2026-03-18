@@ -13,6 +13,7 @@ import ReservationsPage from './pages/ReservationsPage';
 import TablesPage from './pages/TablesPage';
 import OffersPage from './pages/OffersPage';
 import KitchenPage from './pages/KitchenPage';
+import RunningBillPage from './pages/RunningBillPage';
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
         <Route path="/reservations" element={<ProtectedRoute><ReservationsPage /></ProtectedRoute>} />
         <Route path="/tables" element={<ProtectedRoute><TablesPage /></ProtectedRoute>} />
         <Route path="/kitchen" element={<ProtectedRoute><KitchenPage /></ProtectedRoute>} />
+        <Route path="/running-bill" element={<ProtectedRoute><RunningBillPage /></ProtectedRoute>} />
 
         {/* Default redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -10,7 +10,7 @@ export default function OrderModal({ isOpen, onClose, cart, total, tableNumber, 
     const [name, setName] = useState('');
     const [table, setTable] = useState(tableNumber || '');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [paymentStep, setPaymentStep] = useState(false); // show payment options after order placed
+    const [paymentStep, setPaymentStep] = useState(false);
     const [placedOrderId, setPlacedOrderId] = useState(null);
     const [paymentDone, setPaymentDone] = useState(false);
     const [payError, setPayError] = useState('');
@@ -37,7 +37,6 @@ export default function OrderModal({ isOpen, onClose, cart, total, tableNumber, 
 
     const handleApplyPromo = async () => {
         if (!promoCode.trim()) return;
-
         setIsValidating(true);
         setPromoError('');
         try {
@@ -53,16 +52,9 @@ export default function OrderModal({ isOpen, onClose, cart, total, tableNumber, 
                 setPromoError('Invalid or expired coupon code');
                 setAppliedPromo(null);
             } else {
-                // For simplicity, we assume all promos apply 20% discount if not specified
-                // In a real app, you'd check a 'discount_percentage' column
-                const discount = 0.20;
-                setAppliedPromo({
-                    code: data.promo_code,
-                    discount: discount,
-                    title: data.title
-                });
+                setAppliedPromo({ code: data.promo_code, discount: 0.20, title: data.title });
             }
-        } catch (err) {
+        } catch {
             setPromoError('Error validating coupon');
         } finally {
             setIsValidating(false);
@@ -75,7 +67,6 @@ export default function OrderModal({ isOpen, onClose, cart, total, tableNumber, 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!name.trim()) return;
-
         setIsSubmitting(true);
         const result = await onConfirm({
             name,
@@ -84,13 +75,13 @@ export default function OrderModal({ isOpen, onClose, cart, total, tableNumber, 
             discount_amount: discountAmount
         });
         setIsSubmitting(false);
-        // Show payment step after order is placed
         if (result?.orderId) {
             setPlacedOrderId(result.orderId);
             setPaymentStep(true);
         }
     };
 
+    // ── Pay Online ──
     const handlePayNow = () => {
         setPayError('');
         initiatePayment({
@@ -102,6 +93,7 @@ export default function OrderModal({ isOpen, onClose, cart, total, tableNumber, 
                 if (placedOrderId) {
                     await supabase.from('orders').update({
                         payment_status: 'paid',
+                        payment_method: 'online',
                         payment_id: paymentId
                     }).eq('id', placedOrderId);
                 }
@@ -115,6 +107,17 @@ export default function OrderModal({ isOpen, onClose, cart, total, tableNumber, 
         });
     };
 
+    // ── Pay at Counter ──
+    const handlePayAtCounter = async () => {
+        if (placedOrderId) {
+            await supabase.from('orders').update({
+                payment_method: 'counter',
+                payment_status: 'unpaid'
+            }).eq('id', placedOrderId);
+        }
+        onClose();
+    };
+
     const handleWhatsAppReceipt = () => {
         const itemList = cart.map(i => `${i.quantity}x ${i.name} ₹${(i.price * i.quantity).toFixed(0)}`).join('%0A');
         const msg = `*SmartMenu Receipt*%0ATable ${table || 'Walk-in'}%0A%0A${itemList}%0A%0A*Total: ₹${finalTotal.toFixed(0)}*%0AStatus: Paid ✅`;
@@ -125,7 +128,6 @@ export default function OrderModal({ isOpen, onClose, cart, total, tableNumber, 
         <AnimatePresence>
             {isOpen && (
                 <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-slate-900/40 backdrop-blur-sm p-0 sm:p-4">
-                    {/* Backdrop Close Click */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -152,7 +154,7 @@ export default function OrderModal({ isOpen, onClose, cart, total, tableNumber, 
                             </button>
                         </div>
 
-                        {/* Body - Scrollable */}
+                        {/* Body */}
                         <form onSubmit={handleSubmit} className="p-4 sm:p-5 overflow-y-auto">
                             {/* Order Summary */}
                             <div className="bg-slate-50 rounded-xl p-3 mb-5 border border-slate-100 shadow-sm">
@@ -167,14 +169,12 @@ export default function OrderModal({ isOpen, onClose, cart, total, tableNumber, 
                                         </div>
                                     ))}
                                 </div>
-
                                 {appliedPromo && (
                                     <div className="flex justify-between text-sm text-green-600 font-medium py-2 border-t border-slate-200 border-dashed">
                                         <span>Discount ({appliedPromo.code})</span>
                                         <span>- ₹{discountAmount.toFixed(0)}</span>
                                     </div>
                                 )}
-
                                 <div className="border-t border-slate-200 pt-2 flex justify-between font-bold text-base">
                                     <span className="text-slate-800">Total to Pay</span>
                                     <div className="text-right">
@@ -185,7 +185,7 @@ export default function OrderModal({ isOpen, onClose, cart, total, tableNumber, 
                             </div>
 
                             <div className="space-y-4">
-                                {/* Coupon Section */}
+                                {/* Coupon */}
                                 <div className="p-3 bg-primary/5 rounded-xl border border-primary/10">
                                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Have a coupon?</label>
                                     <div className="flex gap-2">
@@ -193,65 +193,48 @@ export default function OrderModal({ isOpen, onClose, cart, total, tableNumber, 
                                             type="text"
                                             value={promoCode}
                                             onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                                            disabled={appliedPromo}
+                                            disabled={!!appliedPromo}
                                             placeholder="ENTER CODE"
                                             className="flex-1 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-primary disabled:bg-slate-100 uppercase font-bold tracking-widest text-charcoal"
                                         />
                                         {appliedPromo ? (
-                                            <button
-                                                type="button"
-                                                onClick={() => { setAppliedPromo(null); setPromoCode(''); }}
-                                                className="px-3 py-2 text-xs font-bold text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-red-100"
-                                            >
+                                            <button type="button" onClick={() => { setAppliedPromo(null); setPromoCode(''); }}
+                                                className="px-3 py-2 text-xs font-bold text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-red-100">
                                                 Remove
                                             </button>
                                         ) : (
-                                            <button
-                                                type="button"
-                                                onClick={handleApplyPromo}
-                                                disabled={!promoCode.trim() || isValidating}
-                                                className="px-4 py-2 bg-charcoal text-white text-xs font-bold rounded-lg hover:bg-slate-800 transition-all disabled:opacity-50"
-                                            >
+                                            <button type="button" onClick={handleApplyPromo} disabled={!promoCode.trim() || isValidating}
+                                                className="px-4 py-2 bg-charcoal text-white text-xs font-bold rounded-lg hover:bg-slate-800 transition-all disabled:opacity-50">
                                                 {isValidating ? '...' : 'Apply'}
                                             </button>
                                         )}
                                     </div>
                                     {promoError && <p className="text-[10px] text-red-500 mt-1 font-medium">{promoError}</p>}
-                                    {appliedPromo && <p className="text-[10px] text-green-600 mt-1 font-bold">✓ Coupon applied successfully!</p>}
+                                    {appliedPromo && <p className="text-[10px] text-green-600 mt-1 font-bold">✓ Coupon applied!</p>}
                                 </div>
 
-                                {/* Name Input */}
+                                {/* Name */}
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                                        Your Name <span className="text-red-500">*</span>
-                                    </label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Your Name <span className="text-red-500">*</span></label>
                                     <input
-                                        type="text"
-                                        required
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
+                                        type="text" required value={name} onChange={(e) => setName(e.target.value)}
                                         className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
                                         placeholder="e.g. Rahul Kumar"
                                     />
                                 </div>
 
-                                {/* Table Number Input */}
+                                {/* Table */}
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                                        Table Number <span className="text-slate-400 font-normal">(Optional)</span>
-                                    </label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Table Number <span className="text-slate-400 font-normal">(Optional)</span></label>
                                     <input
-                                        type="text"
-                                        value={table}
-                                        onChange={(e) => setTable(e.target.value)}
+                                        type="text" value={table} onChange={(e) => setTable(e.target.value)}
                                         className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
                                         placeholder="e.g. 12 or A4"
                                     />
                                 </div>
                             </div>
 
-                            {/* Footer / Submit */}
-                            {/* Payment Step — shown after order is confirmed */}
+                            {/* Payment Step */}
                             {paymentStep ? (
                                 <div className="mt-6 space-y-3">
                                     {paymentDone ? (
@@ -266,12 +249,27 @@ export default function OrderModal({ isOpen, onClose, cart, total, tableNumber, 
                                         </div>
                                     ) : (
                                         <>
-                                            <p className="text-center text-sm font-bold text-charcoal">Order placed! 🎉 Choose how to pay:</p>
+                                            <p className="text-center text-sm font-bold text-charcoal">Order placed! 🎉 How would you like to pay?</p>
                                             {payError && <p className="text-xs text-red-500 text-center">{payError}</p>}
-                                            <button onClick={handlePayNow} className="w-full py-3.5 rounded-xl font-black text-charcoal bg-primary hover:bg-yellow-400 flex items-center justify-center gap-2 shadow-sm">
-                                                <span>💳</span> Pay ₹{finalTotal.toFixed(0)} via UPI / Card
+
+                                            {/* Online Payment */}
+                                            <button
+                                                type="button"
+                                                onClick={handlePayNow}
+                                                className="w-full py-3.5 rounded-xl font-black text-charcoal bg-primary hover:bg-yellow-400 flex items-center justify-center gap-2 shadow-sm"
+                                            >
+                                                <span>💳</span> Pay ₹{finalTotal.toFixed(0)} Online (UPI / Card)
                                             </button>
-                                            <button onClick={onClose} className="w-full py-3 rounded-xl font-bold text-slate-400 hover:text-charcoal text-sm">Pay at Counter Instead</button>
+
+                                            {/* Pay at Counter */}
+                                            <button
+                                                type="button"
+                                                onClick={handlePayAtCounter}
+                                                className="w-full py-3.5 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 flex items-center justify-center gap-2 border border-slate-200 transition-all"
+                                            >
+                                                <span>🧾</span> Pay at Counter
+                                            </button>
+                                            <p className="text-[10px] text-center text-slate-400">Counter payment will be collected by staff</p>
                                         </>
                                     )}
                                 </div>
@@ -294,9 +292,7 @@ export default function OrderModal({ isOpen, onClose, cart, total, tableNumber, 
                                             `Review & Pay • ₹${finalTotal.toFixed(0)}`
                                         )}
                                     </button>
-                                    <p className="text-[10px] text-center text-slate-400 mt-3">
-                                        By clicking confirm, you place a live order.
-                                    </p>
+                                    <p className="text-[10px] text-center text-slate-400 mt-3">By clicking confirm, you place a live order.</p>
                                 </div>
                             )}
                         </form>
