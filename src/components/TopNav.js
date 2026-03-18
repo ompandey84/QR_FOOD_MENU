@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FiMenu } from 'react-icons/fi';
 
 function TopNav({ title, children }) {
     const navigate = useNavigate();
@@ -11,11 +12,19 @@ function TopNav({ title, children }) {
     ];
 
     return (
-        <header className="flex items-center justify-between border-b border-primary/10 bg-white px-6 lg:px-10 py-3 sticky top-0 z-50">
-            <div className="flex items-center gap-8">
+        <header className="flex items-center justify-between border-b border-primary/10 bg-white px-4 lg:px-10 py-3 sticky top-0 z-50">
+            <div className="flex items-center gap-3 lg:gap-8">
+                {/* Hamburger Menu (Mobile Only) */}
+                <button
+                    onClick={() => window.dispatchEvent(new CustomEvent('open-sidebar'))}
+                    className="lg:hidden p-2 -ml-2 text-slate-800 hover:text-primary transition-colors"
+                >
+                    <FiMenu className="w-6 h-6" />
+                </button>
+
                 {/* Mobile logo */}
-                <div className="flex lg:hidden items-center gap-3">
-                    <div className="flex items-center justify-center p-2 bg-primary/20 rounded-lg text-primary">
+                <div className="flex lg:hidden items-center gap-2">
+                    <div className="flex items-center justify-center p-1.5 bg-primary/20 rounded-lg text-primary">
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                         </svg>

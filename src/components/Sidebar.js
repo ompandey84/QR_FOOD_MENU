@@ -12,6 +12,13 @@ function Sidebar() {
     const [pendingCount, setPendingCount] = useState(0);
     const [kitchenCount, setKitchenCount] = useState(0);
     const [userName, setUserName] = useState('Owner');
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+    useEffect(() => {
+        const handleOpen = () => setIsMobileOpen(true);
+        window.addEventListener('open-sidebar', handleOpen);
+        return () => window.removeEventListener('open-sidebar', handleOpen);
+    }, []);
 
     useEffect(() => {
         let subscription;
@@ -87,7 +94,21 @@ function Sidebar() {
     ];
 
     return (
-        <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-[#F4F2E6] sticky top-0 h-screen z-50">
+        <>
+            {/* Mobile Backdrop */}
+            {isMobileOpen && (
+                <div 
+                    className="fixed inset-0 bg-slate-900/40 z-[90] lg:hidden backdrop-blur-sm transition-opacity"
+                    onClick={() => setIsMobileOpen(false)}
+                />
+            )}
+
+            <aside className={`
+                fixed inset-y-0 left-0 z-[100] w-64 bg-white border-r border-[#F4F2E6] flex flex-col h-full
+                transform transition-transform duration-300 ease-in-out shadow-2xl
+                lg:static lg:translate-x-0 lg:shadow-none lg:z-50 lg:h-screen lg:sticky lg:top-0
+                ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
+            `}>
             {/* Logo Section */}
             <div className="px-6 py-8 flex items-center gap-3">
                 <div className="w-10 h-10 bg-charcoal rounded-2xl flex items-center justify-center text-primary transform rotate-12">
@@ -108,7 +129,10 @@ function Sidebar() {
                     return (
                         <button
                             key={item.name}
-                            onClick={() => navigate(item.path)}
+                            onClick={() => {
+                                setIsMobileOpen(false); // auto-close on mobile
+                                navigate(item.path);
+                            }}
                             className={`w-full group flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-200
                                 ${isActive
                                     ? 'bg-primary text-charcoal shadow-sm'
@@ -143,6 +167,7 @@ function Sidebar() {
                 </div>
             </div>
         </aside>
+        </>
     );
 }
 
