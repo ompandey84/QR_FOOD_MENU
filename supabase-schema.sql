@@ -53,12 +53,13 @@ CREATE TABLE IF NOT EXISTS orders (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 -- Safe migration
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS applied_promo TEXT DEFAULT '';
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount NUMERIC(10, 2) DEFAULT 0;
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'unpaid';
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_id TEXT DEFAULT '';
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'counter';
--- Values: 'online' | 'counter'
+ALTER TABLE IF EXISTS orders ADD COLUMN IF NOT EXISTS applied_promo TEXT;
+ALTER TABLE IF EXISTS orders ADD COLUMN IF NOT EXISTS discount_amount NUMERIC(10, 2) DEFAULT 0;
+ALTER TABLE IF EXISTS orders ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'pending';
+ALTER TABLE IF EXISTS orders ADD COLUMN IF NOT EXISTS payment_id TEXT DEFAULT '';
+ALTER TABLE IF EXISTS orders ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'cash';
+ALTER TABLE IF EXISTS orders ADD COLUMN IF NOT EXISTS tax_amount NUMERIC(10, 2) DEFAULT 0;
+-- Values: 'online' | 'cash' | 'counter'
 
 -- Indexes for running-bill session lookup (table + restaurant + status + time)
 CREATE INDEX IF NOT EXISTS idx_orders_session
@@ -87,6 +88,12 @@ CREATE TABLE IF NOT EXISTS special_offers (
   is_active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- Advanced promo conditions (Safe Migration)
+ALTER TABLE IF EXISTS special_offers ADD COLUMN IF NOT EXISTS discount_type TEXT DEFAULT 'percentage';
+ALTER TABLE IF EXISTS special_offers ADD COLUMN IF NOT EXISTS discount_value NUMERIC(10, 2) DEFAULT 0;
+ALTER TABLE IF EXISTS special_offers ADD COLUMN IF NOT EXISTS min_order_value NUMERIC(10, 2) DEFAULT 0;
+ALTER TABLE IF EXISTS special_offers ADD COLUMN IF NOT EXISTS expiry_date DATE;
 
 -- 6. Reservations Table
 CREATE TABLE IF NOT EXISTS reservations (
@@ -315,3 +322,23 @@ DROP POLICY IF EXISTS "Authenticated users can delete dish images" ON storage.ob
 CREATE POLICY "Authenticated users can delete dish images"
   ON storage.objects FOR DELETE
   USING (bucket_id = 'dish-images' AND auth.role() = 'authenticated');
+
+-- 5. Create dynamic_charges table
+CREATE TABLE IF NOT EXISTS dynamic_charges (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL,
+    type TEXT NOT NULL CHECK (type IN ('percentage', 'flat')),
+    value NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Insert default CGST and SGST if the table is empty
+INSERT INTO dynamic_charges (name, type, value, is_active)
+SELECT 'CGST', 'percentage', 2.5, true
+WHERE NOT EXISTS (SELECT 1 FROM dynamic_charges WHERE name = 'CGST');
+
+INSERT INTO dynamic_charges (name, type, value, is_active)
+SELECT 'SGST', 'percentage', 2.5, true
+WHERE NOT EXISTS (SELECT 1 FROM dynamic_charges WHERE name = 'SGST');

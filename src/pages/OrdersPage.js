@@ -84,47 +84,53 @@ export default function OrdersPage() {
     useEffect(() => {
         if (!restaurantId) return;
 
+        console.log('Mounting Realtime Orders Subscription...');
         const subscription = supabase
             .channel('orders-page-realtime')
             .on('postgres_changes',
                 { event: '*', schema: 'public', table: 'orders', filter: `restaurant_id=eq.${restaurantId}` },
-                async (payload) => {
+                (payload) => {
                     if (payload.eventType === 'INSERT') {
-                        const { data: newOrder } = await supabase
-                            .from('orders')
-                            .select('*, order_items(*)')
-                            .eq('id', payload.new.id)
-                            .single();
+                        // FIX: 1-second delay to guarantee `order_items` have successfully finished inserting in Supabase
+                        setTimeout(async () => {
+                            const { data: newOrder } = await supabase
+                                .from('orders')
+                                .select('*, order_items(*)')
+                                .eq('id', payload.new.id)
+                                .single();
 
-                        if (newOrder && Number(newOrder.total) > 0 && newOrder.order_items?.length > 0) {
-                            const isNew = !seenIdsRef.current.has(newOrder.id);
-                            seenIdsRef.current.add(newOrder.id);
-                            setOrders(prev => {
-                                if (prev.some(o => o.id === newOrder.id)) return prev;
-                                return [newOrder, ...prev];
-                            });
-                            if (isNew) {
-                                playBeepRef.current();
-                                fireNotificationRef.current(newOrder);
-                                setNewOrderIds(prev => new Set([...prev, newOrder.id]));
-                                setTimeout(() => {
-                                    setNewOrderIds(prev => {
-                                        const next = new Set(prev);
-                                        next.delete(newOrder.id);
-                                        return next;
-                                    });
-                                }, 8000);
+                            if (newOrder && Number(newOrder.total) > 0 && newOrder.order_items?.length > 0) {
+                                const isNew = !seenIdsRef.current.has(newOrder.id);
+                                seenIdsRef.current.add(newOrder.id);
+                                setOrders(prev => {
+                                    if (prev.some(o => o.id === newOrder.id)) return prev;
+                                    return [newOrder, ...prev];
+                                });
+                                if (isNew) {
+                                    playBeepRef.current();
+                                    fireNotificationRef.current(newOrder); // "New Order Received!" toast equivalent
+                                    setNewOrderIds(prev => new Set([...prev, newOrder.id]));
+                                    setTimeout(() => {
+                                        setNewOrderIds(prev => {
+                                            const next = new Set(prev);
+                                            next.delete(newOrder.id);
+                                            return next;
+                                        });
+                                    }, 8000);
+                                }
                             }
-                        }
+                        }, 1000);
                     } else if (payload.eventType === 'UPDATE') {
-                        const { data: updated } = await supabase
-                            .from('orders')
-                            .select('*, order_items(*)')
-                            .eq('id', payload.new.id)
-                            .single();
-                        if (updated) {
-                            setOrders(prev => prev.map(o => o.id === updated.id ? updated : o));
-                        }
+                        setTimeout(async () => {
+                            const { data: updated } = await supabase
+                                .from('orders')
+                                .select('*, order_items(*)')
+                                .eq('id', payload.new.id)
+                                .single();
+                            if (updated) {
+                                setOrders(prev => prev.map(o => o.id === updated.id ? updated : o));
+                            }
+                        }, 500);
                     } else if (payload.eventType === 'DELETE') {
                         setOrders(prev => prev.filter(o => o.id !== payload.old.id));
                     }
@@ -132,7 +138,7 @@ export default function OrdersPage() {
             )
             .subscribe();
 
-        return () => supabase.removeChannel(subscription);
+        return () => { supabase.removeChannel(subscription); };
     }, [restaurantId]);
 
     // Update order status in DB and state
@@ -244,9 +250,9 @@ export default function OrdersPage() {
                                                             <div className="flex gap-2 mb-3">
                                                                 <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border
                                                                     ${payMethod === 'online'
-                                                                        ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                                                        : 'bg-orange-50 text-orange-700 border-orange-200'}`}>
-                                                                    {payMethod === 'online' ? '💳 Online' : '🧾 Counter'}
+                                                                        ? 'bg-green-50 text-green-700 border-green-200'
+                                                                        : 'bg-slate-50 text-slate-700 border-slate-200'}`}>
+                                                                    {payMethod === 'online' ? '🟢 Online/UPI' : '💵 Cash/Counter'}
                                                                 </span>
                                                                 <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border
                                                                     ${payStatus === 'paid'

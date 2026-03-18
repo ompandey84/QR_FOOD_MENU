@@ -8,6 +8,23 @@ export default function PrintableReceipt({ order, restaurant }) {
         return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
+    // Calculate dynamic totals safely with Null Checks
+    const subtotal = order?.order_items?.reduce((sum, item) => {
+        const price = Number(item?.price) || 0;
+        const qty = Number(item?.quantity) || 0;
+        return sum + (price * qty);
+    }, 0) || 0;
+    
+    const discountAmount = Number(order?.discount_amount) || 0;
+    const discountedSubtotal = Math.max(0, subtotal - discountAmount);
+    
+    // Tax is 5% of discounted subtotal, or use pre-calculated tax_amount if available
+    const taxAmount = Number(order?.tax_amount) || (discountedSubtotal * 0.05);
+    const cgst = taxAmount / 2;
+    const sgst = taxAmount / 2;
+    
+    const grandTotal = discountedSubtotal + taxAmount;
+
     return (
         <div className="receipt-container w-full" style={{ fontFamily: "'Courier New', Courier, monospace", color: '#000', background: '#fff' }}>
             <style>
@@ -78,10 +95,30 @@ export default function PrintableReceipt({ order, restaurant }) {
             </div>
 
             {/* Total Section */}
-            <div className="border-t-2 border-dashed border-black pt-4 mb-6 mt-6">
-                <div className="flex justify-between items-end font-bold">
-                    <span className="text-xl tracking-widest">TOTAL</span>
-                    <span className="text-2xl leading-none tabular-nums text-right">₹{Number(order.total).toFixed(0)}</span>
+            <div className="border-t-2 border-dashed border-black pt-3 mb-6 mt-4">
+                <div className="space-y-1.5 mb-3 text-sm font-semibold">
+                    <div className="flex justify-between">
+                        <span>SUBTOTAL</span>
+                        <span>₹{subtotal.toFixed(2)}</span>
+                    </div>
+                    {discountAmount > 0 && (
+                        <div className="flex justify-between text-black">
+                            <span>DISCOUNT {order.applied_promo ? `(${order.applied_promo})` : ''}</span>
+                            <span>-₹{discountAmount.toFixed(2)}</span>
+                        </div>
+                    )}
+                    <div className="flex justify-between">
+                        <span>CGST (2.5%)</span>
+                        <span>₹{cgst.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span>SGST (2.5%)</span>
+                        <span>₹{sgst.toFixed(2)}</span>
+                    </div>
+                </div>
+                <div className="flex justify-between items-end font-bold border-t border-black pt-2">
+                    <span className="text-xl tracking-widest">GRAND TOTAL</span>
+                    <span className="text-2xl leading-none tabular-nums text-right">₹{grandTotal.toFixed(0)}</span>
                 </div>
             </div>
 

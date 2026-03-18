@@ -19,7 +19,11 @@ export default function OffersPage() {
         promo_code: '',
         badge_text: 'Offer',
         color_theme: 'orange-red',
-        is_active: true
+        is_active: true,
+        discount_type: 'percentage',
+        discount_value: '',
+        min_order_value: '',
+        expiry_date: ''
     });
 
     useEffect(() => {
@@ -55,14 +59,21 @@ export default function OffersPage() {
                 promo_code: form.promo_code.toUpperCase(),
                 badge_text: form.badge_text,
                 color_theme: form.color_theme,
-                is_active: form.is_active
+                is_active: form.is_active,
+                discount_type: form.discount_type,
+                discount_value: Number(form.discount_value) || 0,
+                min_order_value: Number(form.min_order_value) || 0,
+                expiry_date: form.expiry_date || null
             }).select().single();
 
             if (error) throw error;
 
             setOffers([data, ...offers]);
             setShowForm(false);
-            setForm({ title: '', description: '', promo_code: '', badge_text: 'Offer', color_theme: 'orange-red', is_active: true });
+            setForm({ 
+                title: '', description: '', promo_code: '', badge_text: 'Offer', color_theme: 'orange-red', 
+                is_active: true, discount_type: 'percentage', discount_value: '', min_order_value: '', expiry_date: ''
+            });
         } catch (err) {
             alert('Error creating offer: ' + err.message);
         }
@@ -121,6 +132,27 @@ export default function OffersPage() {
                                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Promo Code</label>
                                         <input type="text" value={form.promo_code} onChange={e => setForm({ ...form, promo_code: e.target.value.toUpperCase() })} className="w-full bg-[#FCFAF5] border border-[#F4F2E6] rounded-xl px-4 py-3 text-sm font-bold text-charcoal uppercase focus:outline-none focus:border-primary transition-colors" placeholder="e.g. WEEKEND20" />
                                     </div>
+                                    <div className="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Discount Type</label>
+                                            <select value={form.discount_type} onChange={e => setForm({ ...form, discount_type: e.target.value })} className="w-full bg-[#FCFAF5] border border-[#F4F2E6] rounded-xl px-4 py-3 text-sm font-bold text-charcoal focus:outline-none focus:border-primary transition-colors cursor-pointer">
+                                                <option value="percentage">Percentage (%)</option>
+                                                <option value="flat">Flat Amount (₹)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Discount Value</label>
+                                            <input type="number" min="0" value={form.discount_value} onChange={e => setForm({ ...form, discount_value: e.target.value })} className="w-full bg-[#FCFAF5] border border-[#F4F2E6] rounded-xl px-4 py-3 text-sm font-bold text-charcoal focus:outline-none focus:border-primary transition-colors" placeholder={form.discount_type === 'percentage' ? "e.g. 20" : "e.g. 150"} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Min Order (₹)</label>
+                                            <input type="number" min="0" value={form.min_order_value} onChange={e => setForm({ ...form, min_order_value: e.target.value })} className="w-full bg-[#FCFAF5] border border-[#F4F2E6] rounded-xl px-4 py-3 text-sm font-bold text-charcoal focus:outline-none focus:border-primary transition-colors" placeholder="e.g. 500" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Expiry Date</label>
+                                            <input type="date" value={form.expiry_date} onChange={e => setForm({ ...form, expiry_date: e.target.value })} className="w-full bg-[#FCFAF5] border border-[#F4F2E6] rounded-xl px-4 py-3 text-sm font-bold text-charcoal focus:outline-none focus:border-primary transition-colors" />
+                                        </div>
+                                    </div>
                                     <div className="md:col-span-2">
                                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Description</label>
                                         <input type="text" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full bg-[#FCFAF5] border border-[#F4F2E6] rounded-xl px-4 py-3 text-sm font-bold text-charcoal focus:outline-none focus:border-primary transition-colors" placeholder="e.g. Get 20% off on all main courses." />
@@ -151,7 +183,24 @@ export default function OffersPage() {
                                         <button onClick={() => handleDelete(offer.id)} className="text-slate-300 hover:text-red-500 transition-colors"><FiTrash2 /></button>
                                     </div>
                                     <h3 className="text-xl font-black tracking-tight text-charcoal mb-1">{offer.title}</h3>
-                                    <p className="text-sm font-medium text-slate-500 mb-4 flex-1">{offer.description}</p>
+                                    <p className="text-sm font-medium text-slate-500 mb-4">{offer.description}</p>
+                                    
+                                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 mb-4 space-y-2 flex-1">
+                                        <div className="flex justify-between items-center text-xs">
+                                            <span className="font-bold text-slate-400 uppercase tracking-widest">Discount</span>
+                                            <span className="font-black text-charcoal">{offer.discount_type === 'percentage' ? `${offer.discount_value || 0}% OFF` : `₹${offer.discount_value || 0} OFF`}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-xs border-t border-slate-200/60 pt-2">
+                                            <span className="font-bold text-slate-400 uppercase tracking-widest">Min. Order</span>
+                                            <span className="font-black text-charcoal">{offer.min_order_value > 0 ? `Above ₹${offer.min_order_value}` : 'No Minimum'}</span>
+                                        </div>
+                                        {offer.expiry_date && (
+                                            <div className="flex justify-between items-center text-xs border-t border-slate-200/60 pt-2">
+                                                <span className="font-bold text-slate-400 uppercase tracking-widest">Expires On</span>
+                                                <span className="font-black text-red-500">{new Date(offer.expiry_date).toLocaleDateString()}</span>
+                                            </div>
+                                        )}
+                                    </div>
 
                                     <div className="bg-[#FCFAF5] border border-[#F4F2E6] rounded-xl p-3 flex justify-between items-center mb-4">
                                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Code</span>

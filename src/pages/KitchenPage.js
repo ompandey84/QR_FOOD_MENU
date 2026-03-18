@@ -173,35 +173,38 @@ export default function KitchenPage() {
                         return;
                     }
 
-                    // Fetch full order with items
-                    const { data: fullOrder } = await supabase
-                        .from('orders')
-                        .select('*, order_items(*)')
-                        .eq('id', newRow.id)
-                        .single();
+                    // FIX: 1-second delay to allow order_items to populate in the DB
+                    setTimeout(async () => {
+                        // Fetch full order with items
+                        const { data: fullOrder } = await supabase
+                            .from('orders')
+                            .select('*, order_items(*)')
+                            .eq('id', newRow.id)
+                            .single();
 
-                    if (!fullOrder || fullOrder.total <= 0 || !fullOrder.order_items?.length) return;
+                        if (!fullOrder || fullOrder.total <= 0 || !fullOrder.order_items?.length) return;
 
-                    const isNew = !seenIdsRef.current.has(fullOrder.id);
-                    seenIdsRef.current.add(fullOrder.id);
+                        const isNew = !seenIdsRef.current.has(fullOrder.id);
+                        seenIdsRef.current.add(fullOrder.id);
 
-                    if (isNew) {
-                        playBeep();
-                        fireNotification(fullOrder);
-                        setNewOrderIds(prev => new Set([...prev, fullOrder.id]));
-                        // Remove "new" highlight after 8 seconds
-                        setTimeout(() => {
-                            setNewOrderIds(prev => {
-                                const next = new Set(prev);
-                                next.delete(fullOrder.id);
-                                return next;
-                            });
-                        }, 8000);
-                        // Scroll to top where newest card lands
-                        setTimeout(() => newestCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
-                    }
+                        if (isNew) {
+                            playBeep();
+                            fireNotification(fullOrder);
+                            setNewOrderIds(prev => new Set([...prev, fullOrder.id]));
+                            // Remove "new" highlight after 8 seconds
+                            setTimeout(() => {
+                                setNewOrderIds(prev => {
+                                    const next = new Set(prev);
+                                    next.delete(fullOrder.id);
+                                    return next;
+                                });
+                            }, 8000);
+                            // Scroll to top where newest card lands
+                            setTimeout(() => newestCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+                        }
 
-                    mergeOrders([fullOrder]);
+                        mergeOrders([fullOrder]);
+                    }, 1000);
                 }
             )
             .subscribe();
