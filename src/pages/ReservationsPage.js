@@ -84,19 +84,20 @@ export default function ReservationsPage() {
     const filtered = filter === 'all' ? reservations : reservations.filter(r => r.status === filter);
 
     return (
-        <div className="min-h-screen bg-[#FCFAF5] flex">
-            <Sidebar />
-            <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
-                {/* Header */}
-                <header className="flex items-center justify-between border-b border-primary/10 bg-white px-6 lg:px-10 py-4 sticky top-0 z-50">
-                    <div>
-                        <h1 className="text-xl font-black tracking-tight text-charcoal">Table Reservations</h1>
-                        <p className="text-xs text-slate-400 font-medium">Manage bookings · {reservations.length} total</p>
-                    </div>
-                    <button onClick={() => setShowForm(true)} className="flex items-center gap-2 bg-primary text-charcoal font-black text-sm px-4 py-2.5 rounded-xl hover:bg-primary/80 transition-all shadow-sm">
-                        <FiPlus className="w-4 h-4" /> Book a Table
-                    </button>
-                </header>
+        <MainLayout 
+            activeLink="Reservations"
+            title={
+                <div>
+                    <span className="block">Table Reservations</span>
+                    <span className="block text-xs text-slate-400 font-medium font-normal mt-0.5">Manage bookings · {reservations.length} total</span>
+                </div>
+            }
+            topNavChildren={
+                <button onClick={() => setShowForm(true)} className="flex items-center gap-2 bg-primary text-charcoal font-black text-sm px-4 py-2.5 rounded-xl hover:bg-primary/80 transition-all shadow-sm">
+                    <FiPlus className="w-4 h-4" /> Book a Table
+                </button>
+            }
+        >
 
                 {/* Book a Table Modal (owner) */}
                 {showForm && (
@@ -231,7 +232,6 @@ export default function ReservationsPage() {
                         </div>
                     )}
                 </main>
-            </div>
-        </div>
+        </MainLayout>
     );
 }

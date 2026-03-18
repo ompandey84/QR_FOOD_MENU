@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
-import Sidebar from '../components/Sidebar';
-import TopNav from '../components/TopNav';
 import { useOrderNotifications } from '../hooks/useOrderNotifications';
+import MainLayout from '../components/MainLayout';
 
 // ─────────────────── helpers ────────────────────
 const STATUS_CONFIG = {
@@ -249,63 +248,56 @@ export default function KitchenPage() {
     }, {});
 
     return (
-        <div className="min-h-screen bg-gray-900 flex">
-            <div className="no-print"><Sidebar active="Kitchen" /></div>
-
-            <div className="flex-1 flex flex-col min-w-0">
-                <div className="no-print"><TopNav title="Kitchen Display" activeLink="Kitchen" /></div>
-
-                {/* KDS Header */}
-                <header className="bg-gray-800 border-b border-gray-700 px-6 py-4 flex flex-wrap items-center justify-between gap-4 no-print">
-                    <div className="flex items-center gap-4">
-                        <h1 className="text-2xl font-black text-white tracking-tight">
-                            🍳 Kitchen Display
-                        </h1>
-                        <div className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse" />
-                            <span className="text-green-400 text-xs font-bold uppercase tracking-wider">Live</span>
-                        </div>
+        <MainLayout 
+            activeLink="Kitchen"
+            title={
+                <div className="flex items-center gap-3">
+                    <span className="block">Kitchen Display</span>
+                    <div className="flex items-center gap-2 bg-green-50 border border-green-100 px-3 py-1 rounded-full hidden sm:flex">
+                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                        <span className="text-green-600 text-[10px] font-black uppercase tracking-widest mt-0.5">Live</span>
                     </div>
-
-                    <div className="flex items-center gap-3 flex-wrap">
-                        {/* Filter Tabs */}
-                        <div className="flex gap-1 bg-gray-700 p-1 rounded-xl">
-                            {FILTERS.map(f => (
-                                <button
-                                    key={f.id}
-                                    onClick={() => setFilter(f.id)}
-                                    className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${
-                                        filter === f.id
-                                            ? 'bg-white text-gray-900 shadow'
-                                            : 'text-gray-400 hover:text-white'
-                                    }`}
-                                >
-                                    {f.label}
-                                    {f.id !== 'all' && counts[f.id] > 0 && (
-                                        <span className="ml-1.5 bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">
-                                            {counts[f.id]}
-                                        </span>
-                                    )}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Sound Toggle */}
-                        <button
-                            onClick={toggleSound}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all border ${
-                                soundOn
-                                    ? 'bg-yellow-400 text-gray-900 border-yellow-500'
-                                    : 'bg-gray-700 text-gray-400 border-gray-600'
-                            }`}
-                        >
-                            {soundOn ? '🔔 Sound ON' : '🔕 Sound OFF'}
-                        </button>
+                </div>
+            }
+            topNavChildren={
+                <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 p-1 rounded-xl">
+                    <div className="flex gap-1">
+                        {FILTERS.map(f => (
+                            <button
+                                key={f.id}
+                                onClick={() => setFilter(f.id)}
+                                className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center gap-1.5 ${
+                                    filter === f.id
+                                        ? 'bg-white text-charcoal shadow-sm border border-slate-200/60'
+                                        : 'text-slate-500 hover:text-charcoal hover:bg-slate-100/50'
+                                }`}
+                            >
+                                {f.label}
+                                {f.id !== 'all' && counts[f.id] > 0 && (
+                                    <span className="bg-red-50 text-red-600 border border-red-100 text-[10px] font-black px-1.5 py-0.5 rounded-full">
+                                        {counts[f.id]}
+                                    </span>
+                                )}
+                            </button>
+                        ))}
                     </div>
-                </header>
+                    <div className="w-px h-6 bg-slate-200 mx-1"></div>
+                    <button
+                        onClick={toggleSound}
+                        className={`flex items-center gap-2 px-4 py-1.5 rounded-lg font-bold text-sm transition-all border ${
+                            soundOn
+                                ? 'bg-primary/20 text-charcoal border-primary/40'
+                                : 'bg-transparent text-slate-500 border-transparent hover:text-charcoal'
+                        }`}
+                    >
+                        {soundOn ? '🔔 Sound ON' : '🔕 Sound OFF'}
+                    </button>
+                </div>
+            }
+        >
 
-                {/* Order Grid */}
-                <main className="flex-1 p-6 overflow-y-auto" ref={newestCardRef}>
+            {/* Order Grid */}
+            <main className="flex-1 p-6 overflow-y-auto bg-gray-900 min-h-[calc(100vh-65px)]" ref={newestCardRef}>
                     {loading ? (
                         <div className="flex items-center justify-center h-64">
                             <div className="w-12 h-12 border-4 border-yellow-400/30 border-t-yellow-400 rounded-full animate-spin" />
@@ -329,7 +321,6 @@ export default function KitchenPage() {
                         </div>
                     )}
                 </main>
-            </div>
-        </div>
+        </MainLayout>
     );
 }

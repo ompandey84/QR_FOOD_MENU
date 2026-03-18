@@ -4,7 +4,7 @@ import Sidebar from '../components/Sidebar';
 import { supabase } from '../supabaseClient';
 import { FiDownload, FiTrendingUp, FiShoppingBag, FiDollarSign, FiClock, FiCheckCircle, FiAlertCircle, FiBell, FiX } from 'react-icons/fi';
 import { MdTableRestaurant } from 'react-icons/md';
-import { Menu } from 'lucide-react';
+import MainLayout from '../components/MainLayout';
 
 function StatCard({ icon, label, value, sub, color = 'primary', trend }) {
     const colors = {
@@ -83,7 +83,6 @@ export default function AnalyticsPage() {
     const [showNotif, setShowNotif] = useState(false);
     const [loading, setLoading] = useState(true);
     const [allOrders, setAllOrders] = useState([]);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const loadMetrics = useCallback(async (restId) => {
         const { data: orders } = await supabase.from('orders').select('*, order_items(*)').eq('restaurant_id', restId).order('created_at', { ascending: false });
@@ -160,19 +159,11 @@ export default function AnalyticsPage() {
     const unreadCount = notifications.length;
 
     return (
-        <div className="min-h-screen bg-[#FCFAF5] flex">
-            <Sidebar active="Dashboard" isMobileOpen={isMobileMenuOpen} setIsMobileOpen={setIsMobileMenuOpen} />
-            <div className="flex-1 flex flex-col min-w-0 min-h-[100dvh] h-[100dvh] overflow-y-auto pb-48 lg:pb-0 relative">
-                {/* TopBar */}
-                <header className="flex items-center justify-between border-b border-primary/10 bg-white px-6 lg:px-10 py-3 sticky top-0 z-50">
-                    <div className="flex items-center gap-3">
-                        <Menu 
-                            onClick={() => setIsMobileMenuOpen(true)}
-                            className="md:hidden block cursor-pointer z-50 text-slate-800"
-                        />
-                        <h1 className="text-lg font-black tracking-tight text-charcoal">Analytics Dashboard</h1>
-                    </div>
-                    <div className="flex items-center gap-3">
+        <MainLayout 
+            activeLink="Dashboard" 
+            title="Analytics Dashboard"
+            topNavChildren={
+                <div className="flex items-center gap-3">
                         <button
                             onClick={handleExport}
                             className="flex items-center gap-2 bg-primary text-charcoal font-black text-sm px-4 py-2 rounded-xl hover:bg-primary/80 transition-all shadow-sm"
@@ -218,11 +209,11 @@ export default function AnalyticsPage() {
                             )}
                         </div>
                     </div>
-                </header>
-
-                <main className="p-4 lg:p-8 pb-32 lg:pb-8 space-y-6 lg:space-y-8">
-                    {/* Title */}
-                    <div>
+            }
+        >
+            <main className="p-4 lg:p-8 pb-32 lg:pb-8 space-y-6 lg:space-y-8">
+                {/* Title */}
+                <div>
                         <h2 className="text-3xl font-black tracking-tight text-charcoal">Good to see you! 👋</h2>
                         <p className="text-slate-400 mt-1 font-medium">Here's a live overview of your restaurant's performance.</p>
                     </div>
@@ -288,7 +279,6 @@ export default function AnalyticsPage() {
                         </div>
                     </>)}
                 </main>
-            </div>
-        </div>
+        </MainLayout>
     );
 }

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
 import { QRCodeSVG } from 'qrcode.react';
 import { FiDownload, FiPrinter, FiTrash2, FiPlus } from 'react-icons/fi';
+import MainLayout from '../components/MainLayout';
 
 export default function QRCodesPage() {
     const navigate = useNavigate();
@@ -80,32 +80,33 @@ export default function QRCodesPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#FCFAF5] flex">
-            <Sidebar />
-            <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
-                {/* Header */}
-                <header className="flex items-center justify-between border-b border-primary/10 bg-white px-6 lg:px-10 py-4 sticky top-0 z-50">
-                    <div>
-                        <h1 className="text-xl font-black tracking-tight text-charcoal">Table QR Codes</h1>
-                        <p className="text-xs text-slate-400 font-medium">Print and place on tables · {visibleTables.length} QR codes</p>
+        <MainLayout 
+            activeLink="QR Codes"
+            title={
+                <div>
+                    <span className="block">Table QR Codes</span>
+                    <span className="block text-xs text-slate-400 font-medium font-normal mt-0.5">Print and place on tables · {visibleTables.length} QR codes</span>
+                </div>
+            }
+            topNavChildren={
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 hidden sm:flex">
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Tables:</label>
+                        <input
+                            type="number" min="1" max="100" value={tableCount}
+                            onChange={e => handleUpdateTableCount(e.target.value)}
+                            className="w-14 bg-white border border-slate-200 rounded-lg px-2 py-1 text-sm font-bold text-charcoal text-center focus:outline-none focus:border-primary"
+                        />
                     </div>
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Tables:</label>
-                            <input
-                                type="number" min="1" max="100" value={tableCount}
-                                onChange={e => handleUpdateTableCount(e.target.value)}
-                                className="w-14 bg-white border border-slate-200 rounded-lg px-2 py-1 text-sm font-bold text-charcoal text-center focus:outline-none focus:border-primary"
-                            />
-                        </div>
-                        <button onClick={handleAddTable} className="flex items-center gap-2 bg-primary text-charcoal font-black text-sm px-4 py-2.5 rounded-xl hover:bg-primary/80 transition-all shadow-sm">
-                            <FiPlus className="w-4 h-4" /> Add Table
-                        </button>
-                        <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm text-sm">
-                            <FiPrinter className="w-4 h-4" /> Print All
-                        </button>
-                    </div>
-                </header>
+                    <button onClick={handleAddTable} className="flex items-center gap-2 bg-primary text-charcoal font-black text-sm px-4 py-2.5 rounded-xl hover:bg-primary/80 transition-all shadow-sm">
+                        <FiPlus className="w-4 h-4" /> Add Table
+                    </button>
+                    <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm text-sm">
+                        <FiPrinter className="w-4 h-4" /> Print All
+                    </button>
+                </div>
+            }
+        >
 
                 {/* Delete Confirmation Modal */}
                 {confirmDelete && (
@@ -181,7 +182,7 @@ export default function QRCodesPage() {
                         </div>
                     ))}
                 </div>
-            </div>
-        </div>
+                </div>
+        </MainLayout>
     );
 }
