@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import Sidebar from '../components/Sidebar';
 import TopNav from '../components/TopNav';
 import PrintableReceipt from '../components/PrintableReceipt';
+import { useOrderNotifications } from '../hooks/useOrderNotifications';
 
-// Simplified Kanban configuration
+// Full 4-stage Kanban configuration
 const ORDER_STATUSES = [
-    { id: 'pending', label: 'Incoming Orders', color: 'bg-yellow-500' },
-    { id: 'completed', label: 'Completed Orders', color: 'bg-green-500' },
+    { id: 'pending',   label: 'Incoming',  color: 'bg-yellow-400' },
+    { id: 'preparing', label: 'Preparing', color: 'bg-blue-500'   },
+    { id: 'ready',     label: 'Ready 🎉',  color: 'bg-green-500'  },
+    { id: 'completed', label: 'Completed', color: 'bg-slate-400'  },
 ];
 
 export default function OrdersPage() {
@@ -16,6 +19,11 @@ export default function OrdersPage() {
     const [restaurantId, setRestaurantId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [printingOrder, setPrintingOrder] = useState(null);
+
+    const [newOrderIds, setNewOrderIds] = useState(new Set());
+    const seenIdsRef = useRef(new Set());
+    const soundEnabled = true;
+    const { playBeep, fireNotification } = useOrderNotifications(soundEnabled);
 
     // Effect for triggering print dialog after state updates
     useEffect(() => {
@@ -104,12 +112,26 @@ export default function OrdersPage() {
                             .single();
 
                         if (newOrderWithItems && Number(newOrderWithItems.total) > 0 && newOrderWithItems.order_items?.length > 0) {
+                            const isNew = !seenIdsRef.current.has(newOrderWithItems.id);
+                            seenIdsRef.current.add(newOrderWithItems.id);
                             // Prevent duplicate: only add if not already in state
                             setOrders(prev => {
                                 const alreadyExists = prev.some(o => o.id === newOrderWithItems.id);
                                 if (alreadyExists) return prev;
                                 return [newOrderWithItems, ...prev];
                             });
+                            if (isNew) {
+                                playBeep();
+                                fireNotification(newOrderWithItems);
+                                setNewOrderIds(prev => new Set([...prev, newOrderWithItems.id]));
+                                setTimeout(() => {
+                                    setNewOrderIds(prev => {
+                                        const next = new Set(prev);
+                                        next.delete(newOrderWithItems.id);
+                                        return next;
+                                    });
+                                }, 8000);
+                            }
                         }
                     } else if (payload.eventType === 'UPDATE') {
                         // Fetch full updated order with items so we don't lose order_items
@@ -155,12 +177,17 @@ export default function OrdersPage() {
         }
     };
 
+    // Fix getNextStatus to use the full 4-step lifecycle
     const getNextStatus = (currentStatus) => {
-        // Any status that isn't completed should go to completed
-        if (currentStatus !== 'completed') {
-            return 'completed';
-        }
-        return null;
+        const flow = ['pending', 'preparing', 'ready', 'completed'];
+        const idx = flow.indexOf(currentStatus);
+        if (idx === -1 || idx === flow.length - 1) return null;
+        return flow[idx + 1];
+    };
+
+    const getNextLabel = (status) => {
+        const labels = { pending: '🍳 Send to Kitchen', preparing: '✅ Mark Ready', ready: '🎉 Complete Order' };
+        return labels[status] || null;
     };
 
     // Helper to format time "10:30 AM"
@@ -228,7 +255,7 @@ export default function OrdersPage() {
                                                 {columnOrders.map(order => (
                                                     <div
                                                         key={order.id}
-                                                        className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 animate-slide-up-fade"
+                                                        className={`bg-white p-4 rounded-xl shadow-sm border border-slate-200 transition-all ${newOrderIds.has(order.id) ? 'animate-flash-new border-yellow-400' : ''}`}
                                                     >
                                                         {/* Card Header */}
                                                         <div className="flex justify-between items-start mb-3 border-b border-slate-100 pb-3">
@@ -272,7 +299,7 @@ export default function OrdersPage() {
                                                                     onClick={() => updateOrderStatus(order.id, getNextStatus(order.status))}
                                                                     className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-bold text-sm rounded-xl transition-colors shadow-sm shadow-green-500/20"
                                                                 >
-                                                                    Mark Completed ✓
+                                                                    {getNextLabel(order.status)}
                                                                 </button>
                                                             )}
                                                             <button

@@ -44,6 +44,19 @@
   }
 }
 
+/* Flash animation for new order cards */
+@keyframes flash-new {
+  0%   { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.9); transform: scale(1.015); }
+  30%  { box-shadow: 0 0 0 14px rgba(250, 204, 21, 0.4); }
+  70%  { box-shadow: 0 0 0 6px rgba(250, 204, 21, 0.1); }
+  100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); transform: scale(1); }
+}
+
+.animate-flash-new {
+  animation: flash-new 1.2s ease-out 3;
+}
+
+
 @layer components {
   .btn-primary {
     @apply px-6 py-3 rounded-xl bg-primary text-charcoal font-bold hover:bg-[#F0C900] active:scale-[0.98] transition-all shadow-sm;

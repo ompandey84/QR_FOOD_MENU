@@ -3,13 +3,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { HiOutlineChartBar, HiOutlineCollection, HiOutlineCog } from 'react-icons/hi';
 import { FiShoppingBag, FiMaximize } from 'react-icons/fi';
-import { MdOutlineTableRestaurant, MdOutlineRedeem } from 'react-icons/md';
+import { MdOutlineTableRestaurant, MdOutlineRedeem, MdOutlineKitchen } from 'react-icons/md';
 import { BsCalendarCheck } from 'react-icons/bs';
 
 function Sidebar() {
     const navigate = useNavigate();
     const location = useLocation();
     const [pendingCount, setPendingCount] = useState(0);
+    const [kitchenCount, setKitchenCount] = useState(0);
     const [userName, setUserName] = useState('Owner');
 
     useEffect(() => {
@@ -38,6 +39,14 @@ function Sidebar() {
 
             setPendingCount(count || 0);
 
+            // Also count kitchen-active orders (pending + preparing)
+            const { count: kitCount } = await supabase
+                .from('orders')
+                .select('*', { count: 'exact', head: true })
+                .eq('restaurant_id', rest.id)
+                .in('status', ['pending', 'preparing']);
+            setKitchenCount(kitCount || 0);
+
             subscription = supabase
                 .channel('sidebar-pending')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `restaurant_id=eq.${rest.id}` }, async () => {
@@ -47,6 +56,12 @@ function Sidebar() {
                         .eq('restaurant_id', rest.id)
                         .eq('status', 'pending');
                     setPendingCount(c || 0);
+                    const { count: kc } = await supabase
+                        .from('orders')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('restaurant_id', rest.id)
+                        .in('status', ['pending', 'preparing']);
+                    setKitchenCount(kc || 0);
                 })
                 .subscribe();
         }
@@ -63,6 +78,7 @@ function Sidebar() {
         { name: 'Menu Management', icon: HiOutlineCollection, path: '/menu-manager' },
         { name: 'Offers', icon: MdOutlineRedeem, path: '/offers' },
         { name: 'Orders', icon: FiShoppingBag, path: '/orders', badge: pendingCount },
+        { name: 'Kitchen', icon: MdOutlineKitchen, path: '/kitchen', badge: kitchenCount },
         { name: 'Reservations', icon: BsCalendarCheck, path: '/reservations' },
         { name: 'QR Codes', icon: FiMaximize, path: '/qr-codes' },
         { name: 'Tables', icon: MdOutlineTableRestaurant, path: '/tables' },

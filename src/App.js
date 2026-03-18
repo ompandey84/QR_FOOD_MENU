@@ -12,6 +12,7 @@ import QRCodesPage from './pages/QRCodesPage';
 import ReservationsPage from './pages/ReservationsPage';
 import TablesPage from './pages/TablesPage';
 import OffersPage from './pages/OffersPage';
+import KitchenPage from './pages/KitchenPage';
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
         <Route path="/qr-codes" element={<ProtectedRoute><QRCodesPage /></ProtectedRoute>} />
         <Route path="/reservations" element={<ProtectedRoute><ReservationsPage /></ProtectedRoute>} />
         <Route path="/tables" element={<ProtectedRoute><TablesPage /></ProtectedRoute>} />
+        <Route path="/kitchen" element={<ProtectedRoute><KitchenPage /></ProtectedRoute>} />
 
         {/* Default redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />
