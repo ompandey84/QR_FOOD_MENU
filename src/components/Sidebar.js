@@ -24,6 +24,7 @@ function Sidebar({ active, isMobileOpen: propIsMobileOpen, setIsMobileOpen: prop
         const handleOpen = () => setIsMobileOpen(true);
         window.addEventListener('open-sidebar', handleOpen);
         return () => window.removeEventListener('open-sidebar', handleOpen);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {

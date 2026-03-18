@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
 import { supabase } from '../supabaseClient';
 import { FiDownload, FiTrendingUp, FiShoppingBag, FiDollarSign, FiClock, FiCheckCircle, FiAlertCircle, FiBell, FiX } from 'react-icons/fi';
 import { MdTableRestaurant } from 'react-icons/md';
