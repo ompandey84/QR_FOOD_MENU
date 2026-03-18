@@ -19,9 +19,9 @@ function StatCard({ icon, label, value, sub, color = 'primary', trend }) {
         red: 'bg-red-400 text-white',
     };
     return (
-        <div className={`rounded-2xl border bg-gradient-to-br p-5 ${colors[color]}`}>
-            <div className="flex items-start justify-between mb-4">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconColors[color]}`}>
+        <div className={`rounded-2xl border bg-gradient-to-br p-3 sm:p-5 ${colors[color]}`}>
+            <div className="flex items-start justify-between mb-2 sm:mb-4">
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center ${iconColors[color]}`}>
                     {icon}
                 </div>
                 {trend !== undefined && (
@@ -30,8 +30,8 @@ function StatCard({ icon, label, value, sub, color = 'primary', trend }) {
                     </span>
                 )}
             </div>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{label}</p>
-            <p className="text-3xl font-black tracking-tight mt-1 text-charcoal">{value}</p>
+            <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest leading-tight">{label}</p>
+            <p className="text-2xl sm:text-3xl font-black tracking-tight mt-1 text-charcoal">{value}</p>
             {sub && <p className="text-xs text-slate-400 mt-1">{sub}</p>}
         </div>
     );
@@ -160,7 +160,7 @@ export default function AnalyticsPage() {
     return (
         <div className="min-h-screen bg-[#FCFAF5] flex">
             <Sidebar active="Dashboard" />
-            <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
+            <div className="flex-1 flex flex-col min-w-0 min-h-[100dvh] h-[100dvh] overflow-y-auto pb-48 lg:pb-0 relative">
                 {/* TopBar */}
                 <header className="flex items-center justify-between border-b border-primary/10 bg-white px-6 lg:px-10 py-3 sticky top-0 z-50">
                     <h1 className="text-lg font-black tracking-tight text-charcoal">Analytics Dashboard</h1>
@@ -212,7 +212,7 @@ export default function AnalyticsPage() {
                     </div>
                 </header>
 
-                <main className="p-6 lg:p-8 space-y-8">
+                <main className="p-4 lg:p-8 pb-32 lg:pb-8 space-y-6 lg:space-y-8">
                     {/* Title */}
                     <div>
                         <h2 className="text-3xl font-black tracking-tight text-charcoal">Good to see you! 👋</h2>
@@ -223,7 +223,7 @@ export default function AnalyticsPage() {
                         <div className="flex justify-center py-20"><div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>
                     ) : (<>
                         {/* Stats Grid */}
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
                             <StatCard icon={<FiDollarSign className="w-5 h-5" />} label="Total Revenue" value={`₹${metrics.totalRevenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`} sub="From completed orders" color="primary" />
                             <StatCard icon={<FiShoppingBag className="w-5 h-5" />} label="Total Orders" value={metrics.totalOrders} sub={`${metrics.completedOrders} completed`} color="green" />
                             <StatCard icon={<FiTrendingUp className="w-5 h-5" />} label="Avg Order Value" value={`₹${metrics.avgOrderValue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`} sub="Per completed order" color="blue" />
@@ -260,21 +260,23 @@ export default function AnalyticsPage() {
                             </div>
                         </div>
 
-                        {/* Order Status Summary */}
-                        <div className="grid grid-cols-3 gap-4">
-                            {[
-                                { label: 'Pending', count: metrics.pendingOrders, icon: <FiClock />, color: 'border-yellow-200 bg-yellow-50 text-yellow-700' },
-                                { label: 'Completed', count: metrics.completedOrders, icon: <FiCheckCircle />, color: 'border-green-200 bg-green-50 text-green-700' },
-                                { label: 'All Orders', count: metrics.totalOrders, icon: <FiShoppingBag />, color: 'border-blue-200 bg-blue-50 text-blue-700' },
-                            ].map(s => (
-                                <div key={s.label} className={`rounded-2xl border p-5 ${s.color} flex items-center gap-4`}>
-                                    <div className="text-2xl">{s.icon}</div>
-                                    <div>
-                                        <p className="text-2xl font-black">{s.count}</p>
-                                        <p className="text-xs font-bold uppercase tracking-widest opacity-70">{s.label}</p>
+                        {/* Fixed Bottom Bar for Order Status Summary */}
+                        <div className="fixed bottom-0 left-0 right-0 w-full z-50 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] p-3 pb-6 md:pb-3 lg:static lg:bg-transparent lg:shadow-none lg:p-0">
+                            <div className="grid grid-cols-3 gap-2 lg:gap-4 max-w-7xl mx-auto">
+                                {[
+                                    { label: 'Pending', count: metrics.pendingOrders, icon: <FiClock />, color: 'border-yellow-200 bg-yellow-50 text-yellow-700' },
+                                    { label: 'Completed', count: metrics.completedOrders, icon: <FiCheckCircle />, color: 'border-green-200 bg-green-50 text-green-700' },
+                                    { label: 'All Orders', count: metrics.totalOrders, icon: <FiShoppingBag />, color: 'border-blue-200 bg-blue-50 text-blue-700' },
+                                ].map(s => (
+                                    <div key={s.label} className={`rounded-xl lg:rounded-2xl border p-2 lg:p-5 ${s.color} flex flex-col lg:flex-row items-center justify-center lg:justify-start gap-1 lg:gap-4 text-center lg:text-left`}>
+                                        <div className="text-xl lg:text-2xl">{s.icon}</div>
+                                        <div>
+                                            <p className="text-xl lg:text-2xl font-black leading-none">{s.count}</p>
+                                            <p className="text-[9px] lg:text-xs font-bold uppercase tracking-widest opacity-70 mt-1 lg:mt-0">{s.label}</p>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     </>)}
                 </main>
