@@ -6,13 +6,19 @@ import { FiShoppingBag, FiMaximize } from 'react-icons/fi';
 import { MdOutlineTableRestaurant, MdOutlineRedeem, MdOutlineKitchen, MdOutlineReceipt } from 'react-icons/md';
 import { BsCalendarCheck } from 'react-icons/bs';
 
-function Sidebar() {
+function Sidebar({ active, isMobileOpen: propIsMobileOpen, setIsMobileOpen: propSetIsMobileOpen }) {
     const navigate = useNavigate();
     const location = useLocation();
     const [pendingCount, setPendingCount] = useState(0);
     const [kitchenCount, setKitchenCount] = useState(0);
     const [userName, setUserName] = useState('Owner');
-    const [isMobileOpen, setIsMobileOpen] = useState(false);
+    
+    // Internal state fallback for pages using CustomEvent
+    const [internalMobileOpen, setInternalMobileOpen] = useState(false);
+    
+    // Derived state determining whether to use controlled props or internal state
+    const isMobileOpen = propIsMobileOpen !== undefined ? propIsMobileOpen : internalMobileOpen;
+    const setIsMobileOpen = propSetIsMobileOpen || setInternalMobileOpen;
 
     useEffect(() => {
         const handleOpen = () => setIsMobileOpen(true);
@@ -98,13 +104,13 @@ function Sidebar() {
             {/* Mobile Backdrop */}
             {isMobileOpen && (
                 <div 
-                    className="fixed inset-0 bg-slate-900/40 z-[90] lg:hidden backdrop-blur-sm transition-opacity"
+                    className="fixed inset-0 bg-slate-900/40 z-[990] lg:hidden backdrop-blur-sm transition-opacity"
                     onClick={() => setIsMobileOpen(false)}
                 />
             )}
 
             <aside className={`
-                fixed inset-y-0 left-0 z-[100] w-64 bg-white border-r border-[#F4F2E6] flex flex-col h-full
+                fixed inset-y-0 left-0 z-[999] w-64 bg-white border-r border-[#F4F2E6] flex flex-col h-full
                 transform transition-transform duration-300 ease-in-out shadow-2xl
                 lg:static lg:translate-x-0 lg:shadow-none lg:z-50 lg:h-screen lg:sticky lg:top-0
                 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
