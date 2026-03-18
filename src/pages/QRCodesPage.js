@@ -182,7 +182,6 @@ export default function QRCodesPage() {
                         </div>
                     ))}
                 </div>
-                </div>
         </MainLayout>
     );
 }
