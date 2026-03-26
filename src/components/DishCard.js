@@ -67,11 +67,7 @@ export default function DishCard({ dish, quantity = 0, onUpdateQuantity }) {
                     </p>
                 )}
 
-                <div className="mt-4 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 bg-[#FDF8D7] px-2 py-1 rounded-lg">
-                        <span className="material-symbols-outlined text-sm text-charcoal fill-1">star</span>
-                        <span className="text-charcoal text-[11px] font-black">4.8</span>
-                    </div>
+                <div className="mt-4 flex items-center justify-end">
 
                     {/* Quantity Controls */}
                     <div className="flex items-center">

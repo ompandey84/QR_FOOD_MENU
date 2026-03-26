@@ -15,7 +15,6 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
 
     useEffect(() => {
         supabase.auth.getUser().then(({ data: { user } }) => {
@@ -27,7 +26,6 @@ export default function LoginPage() {
         e.preventDefault();
         setLoading(true);
         setError('');
-        setSuccess('');
 
         try {
             if (isSignUp) {
@@ -185,15 +183,10 @@ export default function LoginPage() {
                             </div>
                         </div>
 
-                        {/* Error/Success */}
+                        {/* Error */}
                         {error && (
                             <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-3 animate-fade-in">
                                 {error}
-                            </div>
-                        )}
-                        {success && (
-                            <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg px-4 py-3 animate-fade-in">
-                                {success}
                             </div>
                         )}
 
@@ -218,28 +211,14 @@ export default function LoginPage() {
                         <p className="text-center text-sm text-slate-500">
                             {isSignUp ? 'Already have an account? ' : 'New restaurant owner? '}
                             <button
-                                onClick={() => { setIsSignUp(!isSignUp); setError(''); setSuccess(''); }}
+                                onClick={() => { setIsSignUp(!isSignUp); setError(''); }}
                                 className="font-bold text-primary hover:underline hover:text-green-600 transition-colors"
                             >
                                 {isSignUp ? 'Sign In instead' : 'Create an account'}
                             </button>
                         </p>
 
-                        {/* Footer links */}
-                        <div className="mt-6 flex items-center justify-center gap-6 text-xs text-slate-400">
-                            <span className="flex items-center gap-1.5 hover:text-slate-600 cursor-pointer transition-colors">
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
-                                </svg>
-                                Support Center
-                            </span>
-                            <span className="flex items-center gap-1.5 hover:text-slate-600 cursor-pointer transition-colors">
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                                </svg>
-                                API Documentation
-                            </span>
-                        </div>
+                        {/* Footer links removed */}
                     </div>
                 </div>
             </div>

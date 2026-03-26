@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
-import TopNav from '../components/TopNav';
+import MainLayout from '../components/MainLayout';
 import { FiPlus, FiTrash2, FiToggleLeft, FiToggleRight } from 'react-icons/fi';
 
 export default function OffersPage() {
@@ -103,11 +102,7 @@ export default function OffersPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#FCFAF5] flex">
-            <Sidebar active="Offers" />
-            <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
-                <TopNav title="" activeLink="Offers" />
-
+        <MainLayout activeLink="Offers" title="">
                 <main className="p-6 lg:p-10 max-w-5xl mx-auto w-full">
                     <div className="flex justify-between items-center mb-8">
                         <div>
@@ -220,7 +215,6 @@ export default function OffersPage() {
                         </div>
                     )}
                 </main>
-            </div>
-        </div>
+        </MainLayout>
     );
 }

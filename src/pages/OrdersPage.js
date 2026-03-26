@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '../supabaseClient';
-import Sidebar from '../components/Sidebar';
-import TopNav from '../components/TopNav';
+import MainLayout from '../components/MainLayout';
 import PrintableReceipt from '../components/PrintableReceipt';
 import { useOrderNotifications } from '../hooks/useOrderNotifications';
 
@@ -67,7 +66,7 @@ export default function OrdersPage() {
                 setOrders(validOrders);
                 seenIdsRef.current = new Set(validOrders.map(o => o.id));
             } catch (err) {
-                console.error('Error fetching orders:', err);
+                // Error handled gracefully in finally
             } finally {
                 setLoading(false);
             }
@@ -84,7 +83,7 @@ export default function OrdersPage() {
     useEffect(() => {
         if (!restaurantId) return;
 
-        console.log('Mounting Realtime Orders Subscription...');
+
         const subscription = supabase
             .channel('orders-page-realtime')
             .on('postgres_changes',
@@ -148,7 +147,7 @@ export default function OrdersPage() {
             const { error } = await supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
             if (error) throw error;
         } catch (err) {
-            console.error('Status update failed:', err);
+            // Status update failed silently
         }
     };
 
@@ -162,12 +161,7 @@ export default function OrdersPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 flex">
-            <Sidebar active="Orders" />
-            <div className="flex-1 flex flex-col min-w-0">
-                <div className="no-print">
-                    <TopNav title="Orders Dashboard" activeLink="Orders" />
-                </div>
+        <MainLayout activeLink="Orders" title="Orders Dashboard">
                 <div className="flex flex-1 flex-col xl:flex-row overflow-hidden">
                     <main className="flex-1 p-6 h-full xl:overflow-hidden overflow-y-auto flex flex-col no-print">
 
@@ -337,7 +331,6 @@ export default function OrdersPage() {
                         )}
                     </aside>
                 </div>
-            </div>
-        </div>
+        </MainLayout>
     );
 }

@@ -28,8 +28,8 @@ export default function SpecialOffers() {
 
                 if (error) throw error;
                 setOffers(data || []);
-            } catch (err) {
-                console.error('Error fetching offers:', err);
+            } catch (_) {
+                /* fail-soft: hide offers section if fetch fails */
             } finally {
                 setLoading(false);
             }

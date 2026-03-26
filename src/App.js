@@ -14,6 +14,7 @@ import TablesPage from './pages/TablesPage';
 import OffersPage from './pages/OffersPage';
 import KitchenPage from './pages/KitchenPage';
 import RunningBillPage from './pages/RunningBillPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
   return (
@@ -39,7 +40,7 @@ function App() {
         <Route path="/running-bill" element={<ProtectedRoute><RunningBillPage /></ProtectedRoute>} />
 
         {/* Default redirect */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Router>
   );

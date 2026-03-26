@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
-import TopNav from '../components/TopNav';
+import MainLayout from '../components/MainLayout';
 import { supabase } from '../supabaseClient';
 import { FiPlus, FiEdit2, FiTrash2 } from 'react-icons/fi';
 
@@ -22,7 +21,7 @@ export default function MenuManagerPage() {
                     .from('menu_items').select('*').eq('restaurant_id', rest.id).order('category');
                 setMenuItems(items || []);
             } catch (err) {
-                console.error(err);
+
             } finally {
                 setLoading(false);
             }
@@ -46,16 +45,12 @@ export default function MenuManagerPage() {
     const categories = [...new Set(menuItems.map(i => i.category))];
 
     return (
-        <div className="min-h-screen bg-background-light flex">
-            <Sidebar active="Menu" />
-            <div className="flex-1 flex flex-col min-w-0">
-                <TopNav title="Menu Manager" activeLink="Menu">
+        <MainLayout activeLink="Menu" title="Menu Manager" topNavChildren={
                     <button onClick={() => navigate('/add-dish')}
                         className="btn-primary flex items-center gap-2 text-sm !py-2.5 !px-5">
                         <FiPlus className="w-4 h-4" /> Add New Dish
                     </button>
-                </TopNav>
-
+        }>
                 <main className="flex-1 p-6 lg:p-10">
                     <h1 className="text-3xl font-black tracking-tight mb-2">Menu Manager</h1>
                     <p className="text-slate-500 mb-8">Organize and manage all your menu items and categories.</p>
@@ -130,8 +125,7 @@ export default function MenuManagerPage() {
                         </>
                     )}
                 </main>
-            </div>
             <div className="fixed top-0 right-0 -z-10 w-[500px] h-[500px] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
-        </div>
+        </MainLayout>
     );
 }

@@ -2,18 +2,13 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { useParams } from 'react-router-dom';
-import { useRazorpay } from '../hooks/useRazorpay';
 
 export default function OrderModal({ isOpen, onClose, cart, total, tableNumber, onConfirm }) {
     const { restaurantId } = useParams();
-    const { initiatePayment } = useRazorpay();
     const [name, setName] = useState('');
     const [table, setTable] = useState(tableNumber || '');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [paymentStep, setPaymentStep] = useState(false);
     const [placedOrderId, setPlacedOrderId] = useState(null);
-    const [paymentDone, setPaymentDone] = useState(false);
-    const [payError, setPayError] = useState('');
 
     // Promo states
     const [promoCode, setPromoCode] = useState('');
@@ -28,10 +23,7 @@ export default function OrderModal({ isOpen, onClose, cart, total, tableNumber, 
             setPromoCode('');
             setAppliedPromo(null);
             setPromoError('');
-            setPaymentStep(false);
             setPlacedOrderId(null);
-            setPaymentDone(false);
-            setPayError('');
         }
     }, [isOpen, tableNumber]);
 
@@ -51,9 +43,35 @@ export default function OrderModal({ isOpen, onClose, cart, total, tableNumber, 
             if (error || !data) {
                 setPromoError('Invalid or expired coupon code');
                 setAppliedPromo(null);
-            } else {
-                setAppliedPromo({ code: data.promo_code, discount: 0.20, title: data.title });
+                return;
             }
+
+            // Check expiry date
+            if (data.expiry_date && new Date(data.expiry_date) < new Date()) {
+                setPromoError('This coupon has expired');
+                setAppliedPromo(null);
+                return;
+            }
+
+            // Check minimum order value
+            if (data.min_order_value && total < data.min_order_value) {
+                setPromoError(`Minimum order value of ₹${data.min_order_value} required`);
+                setAppliedPromo(null);
+                return;
+            }
+
+            let discount = 0;
+            if (data.discount_type === 'percentage') {
+                discount = (data.discount_value / 100) * total;
+            } else {
+                discount = data.discount_value;
+            }
+
+            setAppliedPromo({
+                code: data.promo_code,
+                discount_amount: discount,
+                title: data.title
+            });
         } catch {
             setPromoError('Error validating coupon');
         } finally {
@@ -61,8 +79,8 @@ export default function OrderModal({ isOpen, onClose, cart, total, tableNumber, 
         }
     };
 
-    const discountAmount = appliedPromo ? total * appliedPromo.discount : 0;
-    const finalTotal = total - discountAmount;
+    const discountAmount = appliedPromo ? appliedPromo.discount_amount : 0;
+    const finalTotal = Math.max(0, total - discountAmount);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -77,45 +95,13 @@ export default function OrderModal({ isOpen, onClose, cart, total, tableNumber, 
         setIsSubmitting(false);
         if (result?.orderId) {
             setPlacedOrderId(result.orderId);
-            setPaymentStep(true);
-        }
-    };
-
-    // ── Pay Online ──
-    const handlePayNow = () => {
-        setPayError('');
-        initiatePayment({
-            amount: finalTotal,
-            orderId: placedOrderId,
-            customerName: name,
-            description: `Table ${table || 'Walk-in'} — ${cart.length} items`,
-            onSuccess: async (paymentId) => {
-                if (placedOrderId) {
-                    await supabase.from('orders').update({
-                        payment_status: 'paid',
-                        payment_method: 'online',
-                        payment_id: paymentId
-                    }).eq('id', placedOrderId);
-                }
-                setPaymentDone(true);
-            },
-            onFailure: (reason) => {
-                if (reason !== 'Payment cancelled by user') {
-                    setPayError(reason || 'Payment failed. Try again.');
-                }
-            }
-        });
-    };
-
-    // ── Pay at Counter ──
-    const handlePayAtCounter = async () => {
-        if (placedOrderId) {
+            
+            // Set payment status as unpaid/counter directly
             await supabase.from('orders').update({
                 payment_method: 'counter',
                 payment_status: 'unpaid'
-            }).eq('id', placedOrderId);
+            }).eq('id', result.orderId);
         }
-        onClose();
     };
 
     const handleWhatsAppReceipt = () => {
@@ -234,44 +220,18 @@ export default function OrderModal({ isOpen, onClose, cart, total, tableNumber, 
                                 </div>
                             </div>
 
-                            {/* Payment Step */}
-                            {paymentStep ? (
-                                <div className="mt-6 space-y-3">
-                                    {paymentDone ? (
-                                        <div className="text-center py-4">
-                                            <div className="text-4xl mb-2">🎉</div>
-                                            <h3 className="font-black text-charcoal text-lg">Payment Successful!</h3>
-                                            <p className="text-slate-400 text-sm mb-4">Your order is confirmed and being prepared.</p>
-                                            <button onClick={handleWhatsAppReceipt} className="w-full py-3 rounded-xl font-bold bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2">
-                                                <span>📱</span> Share Receipt on WhatsApp
-                                            </button>
-                                            <button onClick={onClose} className="w-full py-3 rounded-xl font-bold text-slate-500 hover:text-charcoal mt-2">Done</button>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <p className="text-center text-sm font-bold text-charcoal">Order placed! 🎉 How would you like to pay?</p>
-                                            {payError && <p className="text-xs text-red-500 text-center">{payError}</p>}
-
-                                            {/* Online Payment */}
-                                            <button
-                                                type="button"
-                                                onClick={handlePayNow}
-                                                className="w-full py-3.5 rounded-xl font-black text-charcoal bg-primary hover:bg-yellow-400 flex items-center justify-center gap-2 shadow-sm"
-                                            >
-                                                <span>💳</span> Pay ₹{finalTotal.toFixed(0)} Online (UPI / Card)
-                                            </button>
-
-                                            {/* Pay at Counter */}
-                                            <button
-                                                type="button"
-                                                onClick={handlePayAtCounter}
-                                                className="w-full py-3.5 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 flex items-center justify-center gap-2 border border-slate-200 transition-all"
-                                            >
-                                                <span>🧾</span> Pay at Counter
-                                            </button>
-                                            <p className="text-[10px] text-center text-slate-400">Counter payment will be collected by staff</p>
-                                        </>
-                                    )}
+                            {/* Placed Order Success Screen */}
+                            {placedOrderId ? (
+                                <div className="mt-6">
+                                    <div className="text-center py-4">
+                                        <div className="text-4xl mb-2">🎉</div>
+                                        <h3 className="font-black text-charcoal text-lg">Order Confirmed!</h3>
+                                        <p className="text-slate-400 text-sm mb-4">Your order is received and being prepared.</p>
+                                        <button onClick={handleWhatsAppReceipt} className="w-full py-3 rounded-xl font-bold bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2 shadow-sm">
+                                            <span>📱</span> Share Receipt on WhatsApp
+                                        </button>
+                                        <button onClick={onClose} className="w-full py-3 rounded-xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 mt-3 border border-slate-200">Done</button>
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="mt-6">

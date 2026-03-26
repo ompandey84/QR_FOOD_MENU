@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
-import Sidebar from '../components/Sidebar';
-import TopNav from '../components/TopNav';
+import MainLayout from '../components/MainLayout';
 import { useReactToPrint } from 'react-to-print';
 
 // ─── helpers ─────────────────────────────────────────
@@ -340,11 +339,7 @@ export default function RunningBillPage() {
     const tables = Object.keys(byTable).sort();
 
     return (
-        <div className="min-h-screen bg-slate-50 flex">
-            <Sidebar active="Running Bill" />
-            <div className="flex-1 flex flex-col min-w-0">
-                <TopNav title="Running Bill" activeLink="Running Bill" />
-
+        <MainLayout activeLink="Running Bill" title="Running Bill">
                 <main className="flex-1 p-6 overflow-y-auto relative">
                     <div className="flex justify-between items-end mb-6">
                         <div>
@@ -382,12 +377,10 @@ export default function RunningBillPage() {
                         </div>
                     )}
                 </main>
-            </div>
-
             {/* Visually Hidden Print Component */}
             <div style={{ display: 'none' }}>
                 <PrintableRunningBill ref={printComponentRef} data={selectedBillForPrint} restaurant={restaurant} />
             </div>
-        </div>
+        </MainLayout>
     );
 }

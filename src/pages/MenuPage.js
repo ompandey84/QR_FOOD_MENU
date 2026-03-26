@@ -66,6 +66,7 @@ export default function MenuPage() {
             const scrollPos = window.scrollY + 100; // offset for header height
             let current = 'All';
             for (const cat of categories) {
+                if (cat === 'All') continue;
                 const el = document.getElementById(cat);
                 if (el && el.offsetTop <= scrollPos) {
                     current = cat;
@@ -196,7 +197,7 @@ export default function MenuPage() {
             // Return orderId so OrderModal can show the payment step
             return { orderId: order.id };
         } catch (err) {
-            console.error("Failed to place order:", err);
+
             alert("Failed to place order. Please try again or ask the counter.");
             return null;
         }
@@ -234,11 +235,13 @@ export default function MenuPage() {
             {/* Top info bar */}
             <div className="bg-charcoal text-white/80 text-xs py-2 px-4 hidden md:block">
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
-                    <span>KK Foods and Restaurant, the Best in Town</span>
-                    <span className="flex items-center gap-1.5">
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" /></svg>
-                        Order Online +91-892-808-5056
-                    </span>
+                    <span>{restaurant?.description || restaurant?.name || 'Welcome to our restaurant'}</span>
+                    {restaurant?.phone && (
+                        <span className="flex items-center gap-1.5">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" /></svg>
+                            Order Online {restaurant.phone}
+                        </span>
+                    )}
                 </div>
             </div>
 
@@ -253,7 +256,7 @@ export default function MenuPage() {
                                 </svg>
                             </div>
                             <div>
-                                <h1 className="text-xl font-black tracking-tight text-charcoal leading-none">Khana Khajana</h1>
+                                <h1 className="text-xl font-black tracking-tight text-charcoal leading-none">{restaurant?.name || 'SmartMenu'}</h1>
                                 <div className="flex items-center gap-2 mt-0.5">
                                     <span className="text-[10px] font-bold text-warm-gray uppercase tracking-widest leading-none">Digital Menu</span>
                                     {tableNumber && (
@@ -281,7 +284,7 @@ export default function MenuPage() {
                         >
                             <span className="material-symbols-outlined text-sm">calendar_month</span> Reserve Table
                         </button>
-                        <button className="relative p-2 bg-[#F4F2E6] rounded-full hover:bg-primary/20 transition-colors">
+                        <button onClick={() => setIsOrderModalOpen(true)} className="relative p-2 bg-[#F4F2E6] rounded-full hover:bg-primary/20 transition-colors">
                             <span className="material-symbols-outlined text-charcoal">shopping_basket</span>
                             {cartItemCount > 0 && (
                                 <span className="absolute -top-1 -right-1 bg-primary text-charcoal text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
@@ -295,15 +298,14 @@ export default function MenuPage() {
 
             <main className="flex-1 w-full max-w-[1200px] mx-auto px-4 md:px-6 py-6 mb-24">
                 <section className="relative w-full aspect-[21/9] md:aspect-[3/1] rounded-2xl overflow-hidden mb-12 group shadow-xl shadow-charcoal/5">
-                    <img className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Restaurant interior" src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=2070" />
+                    <img className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Restaurant placeholder" src={restaurant?.logo_url || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=2070"} />
                     <div className="absolute inset-0 bg-gradient-to-t from-charcoal/90 via-charcoal/30 to-transparent flex flex-col justify-end p-8 md:p-16">
                         <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-2 mb-3">
-                                <span className="bg-primary text-charcoal text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded">Open Now</span>
-                                {tableParam && <span className="text-white/80 text-sm font-medium backdrop-blur-md bg-white/10 px-3 py-1 rounded-full border border-white/20">Table {tableParam} • Fine Dining</span>}
+                                {tableParam && <span className="text-white/80 text-sm font-medium backdrop-blur-md bg-white/10 px-3 py-1 rounded-full border border-white/20">Table {tableParam}</span>}
                             </div>
-                            <h1 className="text-white text-5xl md:text-7xl font-black leading-tight tracking-tighter truncate mb-2">{restaurant?.name || 'Bell Fresh'}</h1>
-                            <p className="text-white/70 text-sm md:text-lg max-w-xl font-medium line-clamp-2">Exquisite flavors crafted with fresh, local ingredients. Enjoy your digital dining experience.</p>
+                            <h1 className="text-white text-5xl md:text-7xl font-black leading-tight tracking-tighter truncate mb-2">{restaurant?.name || 'Restaurant Menu'}</h1>
+                            <p className="text-white/70 text-sm md:text-lg max-w-xl font-medium line-clamp-2">{restaurant?.description || 'Exquisite flavors crafted with fresh, local ingredients. Enjoy your digital dining experience.'}</p>
                             <button
                                 onClick={() => setIsReservationOpen(true)}
                                 className="mt-4 inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white font-bold text-sm px-5 py-2.5 rounded-xl border border-white/20 transition-all w-fit"
@@ -320,7 +322,7 @@ export default function MenuPage() {
                 <div className="flex items-center mb-4"><label className="inline-flex items-center cursor-pointer"><input type="checkbox" className="form-checkbox h-4 w-4 text-orange-500" checked={vegOnly} onChange={() => setVegOnly(!vegOnly)} /><span className="ml-2 text-sm text-slate-700">Veg Only</span></label></div>
                 <div className="mb-6"><CategoryTabs categories={categories} activeCategory={activeCategory} onSelect={handleCategoryClick} /></div>
                 {search && <p className="text-sm text-slate-500 mb-4">{filtered.length} result{filtered.length !== 1 ? 's' : ''} for "{search}"</p>}
-                {categories.map((cat) => (
+                {categories.filter(cat => cat !== 'All').map((cat) => (
                     <CategorySection key={cat} id={cat} title={cat} dishes={filtered.filter((d) => d.category === cat)} cart={cart} onUpdateQuantity={handleUpdateQuantity} />
                 ))}
 

@@ -32,8 +32,8 @@ export default function MyOrdersModal({ isOpen, onClose }) {
 
             if (error) throw error;
             setOrders(data || []);
-        } catch (err) {
-            console.error("Error fetching my orders:", err);
+        } catch (_) {
+            /* fail-soft: show empty state if fetch fails */
         } finally {
             setLoading(false);
         }
@@ -90,7 +90,7 @@ export default function MyOrdersModal({ isOpen, onClose }) {
                                             </div>
                                             <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider
                                                 ${order.status === 'completed' ? 'bg-green-100 text-green-600' :
-                                                    order.status === 'cooking' ? 'bg-orange-100 text-orange-600' :
+                                                    order.status === 'preparing' ? 'bg-orange-100 text-orange-600' :
                                                         'bg-blue-100 text-blue-600'}`}>
                                                 {order.status}
                                             </span>
@@ -107,7 +107,7 @@ export default function MyOrdersModal({ isOpen, onClose }) {
 
                                         <div className="pt-3 border-t border-dashed border-[#F4F2E6] flex justify-between items-center">
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase">Total Paid</span>
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase">Total</span>
                                                 <span className="text-lg font-black text-charcoal tracking-tighter">₹{order.total}</span>
                                             </div>
                                             <div className="text-right">
@@ -121,10 +121,7 @@ export default function MyOrdersModal({ isOpen, onClose }) {
                         )}
                     </div>
 
-                    {/* Footer */}
-                    <div className="p-6 bg-[#FCFAF5] sm:rounded-b-[2rem] border-t border-[#F4F2E6]">
-                        <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Live status updates enabled</p>
-                    </div>
+                    {/* Footer removed to eliminate dummy text */}
                 </motion.div>
             </div>
         </div>

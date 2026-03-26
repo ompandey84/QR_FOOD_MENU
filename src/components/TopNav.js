@@ -12,7 +12,7 @@ function TopNav({ title, children }) {
     ];
 
     return (
-        <header className="flex items-center justify-between border-b border-primary/10 bg-white px-4 lg:px-10 py-3 sticky top-0 z-50">
+        <header className="flex items-center justify-between border-b border-primary/10 bg-white px-4 lg:px-10 py-3 sticky top-0 z-50 no-print">
             <div className="flex items-center gap-3 lg:gap-8">
                 {/* Hamburger Menu (Mobile Only) */}
                 <button

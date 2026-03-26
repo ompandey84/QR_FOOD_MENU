@@ -133,10 +133,11 @@ DROP POLICY IF EXISTS "Owner can delete reservations" ON reservations;
 CREATE POLICY "Owner can delete reservations" ON reservations FOR DELETE
   USING (EXISTS (SELECT 1 FROM restaurants WHERE restaurants.id = reservations.restaurant_id AND restaurants.owner_id = auth.uid()));
 
--- Orders: public can UPDATE too (for payment_status after Razorpay)
+-- Orders: public can UPDATE only unpaid orders (for payment_status after Razorpay)
 DROP POLICY IF EXISTS "Public can update order payment" ON orders;
 CREATE POLICY "Public can update order payment" ON orders FOR UPDATE
-  USING (true) WITH CHECK (true);
+  USING (payment_status IN ('unpaid', 'pending'))
+  WITH CHECK (payment_status IN ('paid', 'unpaid', 'pending'));
 
 
 -- Public read access (customers can view menus and offers)
@@ -342,3 +343,14 @@ WHERE NOT EXISTS (SELECT 1 FROM dynamic_charges WHERE name = 'CGST');
 INSERT INTO dynamic_charges (name, type, value, is_active)
 SELECT 'SGST', 'percentage', 2.5, true
 WHERE NOT EXISTS (SELECT 1 FROM dynamic_charges WHERE name = 'SGST');
+
+-- Enable RLS for dynamic_charges
+ALTER TABLE dynamic_charges ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public can read active dynamic charges" ON dynamic_charges;
+CREATE POLICY "Public can read active dynamic charges" ON dynamic_charges FOR SELECT
+  USING (is_active = true);
+
+DROP POLICY IF EXISTS "Authenticated users can manage dynamic charges" ON dynamic_charges;
+CREATE POLICY "Authenticated users can manage dynamic charges" ON dynamic_charges
+  USING (auth.role() = 'authenticated');

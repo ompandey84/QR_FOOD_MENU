@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
+import MainLayout from '../components/MainLayout';
 import { FiUsers, FiClock, FiTrash2, FiEdit2, FiCheck, FiX } from 'react-icons/fi';
 
 export default function TablesPage() {
@@ -129,27 +129,27 @@ export default function TablesPage() {
     const availableCount = tableCount - occupiedCount;
 
     return (
-        <div className="min-h-screen bg-[#FCFAF5] flex">
-            <Sidebar />
-            <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
-                {/* Header */}
-                <header className="flex items-center justify-between border-b border-primary/10 bg-white px-6 lg:px-10 py-4 sticky top-0 z-50">
-                    <div>
-                        <h1 className="text-xl font-black tracking-tight text-charcoal">Live Floor Plan</h1>
-                        <p className="text-xs text-slate-400 font-medium">Real-time table status · Click seat count to edit</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-3 bg-red-50 border border-red-100 px-4 py-2 rounded-xl">
+        <MainLayout
+            activeLink="Tables"
+            title={
+                <div>
+                    <span className="block pr-4">Live Floor Plan</span>
+                    <span className="block text-xs text-slate-400 font-medium font-normal mt-0.5">Real-time table status · Click seat count to edit</span>
+                </div>
+            }
+            topNavChildren={
+                    <div className="flex items-center gap-4 max-w-full overflow-x-auto no-scrollbar">
+                        <div className="flex items-center gap-2 bg-red-50 border border-red-100 px-3 py-1.5 rounded-xl whitespace-nowrap">
                             <span className="w-2.5 h-2.5 bg-red-400 rounded-full animate-pulse" />
                             <span className="text-sm font-black text-red-600">{occupiedCount} Occupied</span>
                         </div>
-                        <div className="flex items-center gap-3 bg-green-50 border border-green-100 px-4 py-2 rounded-xl">
+                        <div className="flex items-center gap-2 bg-green-50 border border-green-100 px-3 py-1.5 rounded-xl whitespace-nowrap">
                             <span className="w-2.5 h-2.5 bg-green-400 rounded-full" />
                             <span className="text-sm font-black text-green-600">{availableCount} Available</span>
                         </div>
                     </div>
-                </header>
-
+            }
+        >
                 <main className="p-6 lg:p-8 space-y-6">
                     {/* Filters */}
                     <div className="flex items-center justify-between">
@@ -250,7 +250,6 @@ export default function TablesPage() {
                         </div>
                     )}
                 </main>
-            </div>
-        </div>
+        </MainLayout>
     );
 }

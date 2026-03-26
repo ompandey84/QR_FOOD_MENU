@@ -175,7 +175,9 @@ export default function QRCodesPage() {
                 <div className="hidden print:grid grid-cols-2 gap-8 p-8 bg-white">
                     {visibleTables.map(table => (
                         <div key={`print-${table}`} className="border-4 border-charcoal p-8 flex flex-col items-center justify-center rounded-3xl break-inside-avoid mb-8 h-[500px]">
-                            <h2 className="text-4xl font-black text-charcoal mb-2 uppercase tracking-wide">SmartMenu</h2>
+                            <h2 className="text-4xl font-black text-charcoal mb-2 uppercase tracking-wide">
+                                {restaurantId ? 'SmartMenu' : 'SmartMenu'} {/* Fallback while we add name fetch later if needed */}
+                            </h2>
                             <p className="text-lg font-bold text-slate-500 mb-12">Scan to Order</p>
                             <QRCodeSVG value={getMenuUrl(table)} size={240} level="H" includeMargin={true} fgColor="#1c1a0d" />
                             <div className="mt-12 bg-charcoal text-white text-3xl font-black px-12 py-4 rounded-full">TABLE {table}</div>

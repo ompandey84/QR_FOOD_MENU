@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
-import TopNav from '../components/TopNav';
+import MainLayout from '../components/MainLayout';
 import { supabase } from '../supabaseClient';
 import { FiSave, FiUpload } from 'react-icons/fi';
 
@@ -102,10 +101,7 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background-light flex">
-            <Sidebar active="Settings" />
-            <div className="flex-1 flex flex-col min-w-0">
-                <TopNav title="Restaurant Settings" activeLink="Settings" />
+        <MainLayout activeLink="Settings" title="Restaurant Settings">
                 <main className="flex-1 p-6 lg:p-10 max-w-4xl">
                     <h1 className="text-3xl font-black tracking-tight mb-2">Restaurant Settings</h1>
                     <p className="text-slate-500 mb-8">Manage your digital presence, store hours, and contact details.</p>
@@ -176,8 +172,7 @@ export default function SettingsPage() {
                         </div>
                     </div>
                 </main>
-            </div>
             <div className="fixed top-0 right-0 -z-10 w-[500px] h-[500px] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
-        </div>
+        </MainLayout>
     );
 }

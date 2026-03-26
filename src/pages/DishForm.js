@@ -6,7 +6,7 @@ import TopNav from '../components/TopNav';
 
 const CATEGORIES = [
     // Indian
-    'North Indian', 'South Indian', 'Chinese', 'Mughlai', 'Punjabi', 'Bengali', 'Gujarati', 'Rajasthani', 'South Indian', 'Tandoor', 'Biryani',
+    'North Indian', 'South Indian', 'Chinese', 'Mughlai', 'Punjabi', 'Bengali', 'Gujarati', 'Rajasthani', 'Tandoor', 'Biryani',
     // Global
     'Italian', 'Mediterranean', 'Mexican', 'Thai', 'Japanese', 'Korean', 'Continental', 'French', 'American', 'Middle Eastern', 'Lebanese', 'Spanish', 'Greek', 'Turkish', 'Vietnamese',
     // Types
@@ -23,7 +23,8 @@ export default function DishForm() {
 
     const [form, setForm] = useState({
         name: '', category: 'Main Course', type: 'veg', price: '', description: '',
-        is_vegan: false, is_gluten_free: false, has_egg: false, is_spicy: false
+        is_vegan: false, is_gluten_free: false, has_egg: false, is_spicy: false,
+        is_available: true
     });
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState('');
@@ -49,7 +50,8 @@ export default function DishForm() {
                 is_vegan: data.is_vegan || false,
                 is_gluten_free: data.is_gluten_free || false,
                 has_egg: data.has_egg || false,
-                is_spicy: data.is_spicy || false
+                is_spicy: data.is_spicy || false,
+                is_available: data.is_available ?? true
             });
             if (data.image_url) setExistingImageUrl(data.image_url);
         } catch (err) {
@@ -66,6 +68,10 @@ export default function DishForm() {
     function handleImageChange(e) {
         const file = e.target.files?.[0];
         if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Image size must be less than 5MB');
+            return;
+        }
         setImageFile(file);
         setImagePreview(URL.createObjectURL(file));
     }
@@ -104,16 +110,15 @@ export default function DishForm() {
                 name: form.name.trim(), category: form.category, type: form.type,
                 price: parseFloat(form.price), description: form.description.trim(),
                 image_url: imageUrl, restaurant_id: rest.id,
+                is_available: form.is_available
             };
 
             // Try to include dietary tags — gracefully skip if columns missing
             const dietaryFields = {};
-            try {
-                dietaryFields.is_vegan = form.is_vegan;
-                dietaryFields.is_gluten_free = form.is_gluten_free;
-                dietaryFields.has_egg = form.has_egg;
-                dietaryFields.is_spicy = form.is_spicy;
-            } catch (_) { /* optional columns may not exist */ }
+            if (form.is_vegan !== undefined) dietaryFields.is_vegan = form.is_vegan;
+            if (form.is_gluten_free !== undefined) dietaryFields.is_gluten_free = form.is_gluten_free;
+            if (form.has_egg !== undefined) dietaryFields.has_egg = form.has_egg;
+            if (form.is_spicy !== undefined) dietaryFields.is_spicy = form.is_spicy;
 
             const dishData = { ...coreDish, ...dietaryFields };
 
@@ -231,7 +236,7 @@ export default function DishForm() {
                                         <p className="text-xs text-slate-500">Item will be visible to customers</p>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" defaultChecked className="sr-only peer" />
+                                        <input type="checkbox" checked={form.is_available} onChange={() => setForm({...form, is_available: !form.is_available})} className="sr-only peer" />
                                         <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer 
                                     peer-checked:after:translate-x-full peer-checked:after:border-white 
                                     after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
