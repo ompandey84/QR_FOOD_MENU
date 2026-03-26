@@ -136,13 +136,14 @@ export default function MenuPage() {
             const payload = {
                 restaurant_id: restaurantId,
                 customer_name: customerDetails.name,
+                customer_phone: customerDetails.phone,
                 table_number: customerDetails.table,
                 total: finalTotal,
                 applied_promo: customerDetails.applied_promo || '',
                 discount_amount: customerDetails.discount_amount || 0,
                 status: 'pending',
-                payment_status: 'unpaid',
-                payment_method: 'counter', // default; updated to 'online' after Razorpay success
+                payment_status: customerDetails.payment_method === 'online' ? 'pending' : 'unpaid',
+                payment_method: customerDetails.payment_method || 'counter',
                 payment_id: ''
             };
 

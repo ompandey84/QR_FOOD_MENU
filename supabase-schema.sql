@@ -59,6 +59,7 @@ ALTER TABLE IF EXISTS orders ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAUL
 ALTER TABLE IF EXISTS orders ADD COLUMN IF NOT EXISTS payment_id TEXT DEFAULT '';
 ALTER TABLE IF EXISTS orders ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'cash';
 ALTER TABLE IF EXISTS orders ADD COLUMN IF NOT EXISTS tax_amount NUMERIC(10, 2) DEFAULT 0;
+ALTER TABLE IF EXISTS orders ADD COLUMN IF NOT EXISTS customer_phone TEXT;
 -- Values: 'online' | 'cash' | 'counter'
 
 -- Indexes for running-bill session lookup (table + restaurant + status + time)
