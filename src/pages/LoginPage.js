@@ -55,7 +55,12 @@ export default function LoginPage() {
                 navigate('/dashboard', { replace: true });
             }
         } catch (err) {
-            setError(err.message);
+            console.error('Auth Error Details:', err);
+            let msg = err.message;
+            if (msg.includes('fetch')) {
+                msg = 'Connection Error: Failed to reach Supabase. Please check if your project is PAUSED or if an AdBlocker is blocking supabase.co';
+            }
+            setError(msg);
         } finally {
             setLoading(false);
         }
