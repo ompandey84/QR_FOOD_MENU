@@ -15,10 +15,12 @@ import OffersPage from './pages/OffersPage';
 import SponsoredPage from './pages/SponsoredPage';
 import SubscriptionPage from './pages/SubscriptionPage';
 import NotFoundPage from './pages/NotFoundPage';
+import AdBlockerWarning from './components/AdBlockerWarning';
 
 function App() {
   return (
     <Router>
+      <AdBlockerWarning />
       <Routes>
         {/* Public – Customer Facing Menu */}
         <Route path="/menu/:restaurantId" element={<MenuPage />} />

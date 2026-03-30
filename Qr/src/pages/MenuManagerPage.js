@@ -4,8 +4,10 @@ import MainLayout from '../components/MainLayout';
 import { supabase } from '../supabaseClient';
 import Shimmer from '../components/Shimmer';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { FiPlus, FiEdit2, FiTrash2, FiStar } from 'react-icons/fi';
+import { FiTrash2, FiEdit2, FiPlus, FiArrowUp, FiArrowDown, FiStar } from 'react-icons/fi';
 import { useSubscription } from '../hooks/useSubscription';
+import ErrorDialog from '../components/ErrorDialog';
+import PlanGate from '../components/PlanGate';
 
 export default function MenuManagerPage() {
     const navigate = useNavigate();
@@ -14,6 +16,7 @@ export default function MenuManagerPage() {
     const [deleting, setDeleting] = useState(null);
     const [showConfirm, setShowConfirm] = useState(null);
     const [restaurantId, setRestaurantId] = useState(null);
+    const [errorDialog, setErrorDialog] = useState({ isOpen: false, title: '', message: '' });
 
     const { canAddItem, limits, plan } = useSubscription(restaurantId);
     const canUseFeatured = plan === 'growth' || plan === 'pro';
@@ -239,6 +242,13 @@ export default function MenuManagerPage() {
                 message="Are you sure you want to delete this dish? This action cannot be undone."
                 onConfirm={() => handleDelete(showConfirm)}
                 onCancel={() => setShowConfirm(null)}
+            />
+
+            <ErrorDialog
+                isOpen={errorDialog.isOpen}
+                title={errorDialog.title}
+                message={errorDialog.message}
+                onClose={() => setErrorDialog({ isOpen: false, title: '', message: '' })}
             />
         </MainLayout>
     );
