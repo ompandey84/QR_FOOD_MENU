@@ -142,7 +142,9 @@ export default function LoginPage() {
         } catch (err) {
             console.error('Auth Error Details:', err);
             let msg = err.message;
-            if (msg.includes('fetch')) {
+            if (!process.env.REACT_APP_SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL.includes('placeholder')) {
+                msg = 'Deployment Error: Missing Supabase Environment Variables on Vercel! Please go to your Vercel Project Settings > Environment Variables, add REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY from your local .env, and Redeploy.';
+            } else if (msg.includes('fetch')) {
                 msg = 'Connection Error: Failed to reach Supabase. Please check if your project is PAUSED or if an AdBlocker is blocking supabase.co';
             }
             setError(msg);

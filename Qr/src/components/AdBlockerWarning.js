@@ -10,6 +10,11 @@ export default function AdBlockerWarning() {
         let isMounted = true;
         
         async function checkSupabaseConnection() {
+            // Do not check for adblockers if the URL is literally just missing from Environment Variables
+            if (!process.env.REACT_APP_SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL.includes('placeholder')) {
+                return;
+            }
+
             try {
                 // A lightweight ping to check if the network request is blocked
                 // Adblockers usually intercept and block the actual fetch call entirely 
