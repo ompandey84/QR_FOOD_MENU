@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-display antialiased bg-[#FCFAF5] text-charcoal selection:bg-primary/30;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .fill-1 {
+    font-variation-settings: 'FILL' 1;
+  }
+
+  .print-only {
+    display: none;
+  }
+
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+
+    .print-only {
+      display: block !important;
+    }
+
+    /* Ensure the body takes full height and removes background in print */
+    body {
+      background: white !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+}
+
+/* Flash animation for new order cards */
+@keyframes flash-new {
+  0%   { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.9); transform: scale(1.015); }
+  30%  { box-shadow: 0 0 0 14px rgba(250, 204, 21, 0.4); }
+  70%  { box-shadow: 0 0 0 6px rgba(250, 204, 21, 0.1); }
+  100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); transform: scale(1); }
+}
+
+.animate-flash-new {
+  animation: flash-new 1.2s ease-out 3;
+}
+
+/* Genie fly-to-cart animation */
+@keyframes genie-fly {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(calc(var(--end-x) * 0.3), calc(var(--end-y) * 0.1 - 40px)) scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--end-x), var(--end-y)) scale(0.2);
+    opacity: 0;
+  }
+}
+
+/* Slide-up animation for cart bar */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-3 rounded-xl bg-primary text-charcoal font-bold hover:bg-[#F0C900] active:scale-[0.98] transition-all shadow-sm;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 rounded-xl border border-slate-200 bg-white font-bold text-slate-600 hover:bg-slate-50 transition-all;
+  }
+
+  .btn-danger {
+    @apply px-6 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 active:scale-[0.98] transition-all shadow-sm;
+  }
+
+  .btn-pill {
+    @apply px-5 py-2.5 rounded-full font-bold text-sm transition-all flex items-center gap-2;
+  }
+
+  .card-premium {
+    @apply bg-white p-6 rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0, 0, 0, 0.02)];
+  }
+
+  .stat-card {
+    @apply bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-3 hover:shadow-md transition-all;
+  }
+
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 font-semibold hover:bg-primary/10 hover:text-charcoal transition-all;
+  }
+
+  .sidebar-item-active {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-charcoal font-bold;
+  }
+
+  .input-field {
+    @apply w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium
+           text-charcoal placeholder:text-slate-400 focus:border-primary focus:ring-2
+           focus:ring-primary/20 focus:outline-none transition-all;
+  }
+
+  .card {
+    @apply bg-white p-6 rounded-2xl border border-slate-100 shadow-sm;
+  }
+
+  .section-title {
+    @apply text-[10px] font-black text-slate-400 uppercase tracking-widest;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-300;
+}
